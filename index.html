@@ -1,0 +1,1268 @@
+,<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ZX BATTLE - Gaming Tournaments</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+<style>
+:root{--primary:#6C5CE7;--primary-light:#a29bfe;--secondary:#00CEC9;--accent:#FD79A8;--success:#00b894;--warning:#fdcb6e;--danger:#d63031;--info:#0984e3;--premium-g:linear-gradient(135deg,#f39c12,#e74c3c,#f39c12);--gradient:linear-gradient(135deg,#6C5CE7,#a29bfe);--gradient2:linear-gradient(135deg,#00CEC9,#81ecec);--shadow:0 4px 20px rgba(0,0,0,.3);--radius:14px;--radius-sm:8px;--transition:all .3s cubic-bezier(.4,0,.2,1)}
+[data-theme="dark"]{--bg:#0a0a1a;--bg2:#12122a;--card:#1a1a2e;--card2:#16213e;--card-hover:#1e1e3a;--text:#fff;--text2:#b2bec3;--text3:#636e72;--border:#2d3436;--input-bg:#16213e;--nav-bg:rgba(18,18,42,.95);--overlay:rgba(0,0,0,.7);--shimmer:linear-gradient(90deg,#1a1a2e 25%,#2d2d4e 50%,#1a1a2e 75%)}
+[data-theme="light"]{--bg:#f0f2f5;--bg2:#fff;--card:#fff;--card2:#f8f9fa;--card-hover:#f0f0f5;--text:#2d3436;--text2:#636e72;--text3:#b2bec3;--border:#dfe6e9;--input-bg:#f8f9fa;--nav-bg:rgba(255,255,255,.95);--overlay:rgba(0,0,0,.5);--shimmer:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh}
+a{text-decoration:none;color:inherit}
+input,select,textarea,button{font-family:inherit;outline:none;border:none}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--primary);border-radius:10px}
+img{max-width:100%}
+
+#fullLoader{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;transition:opacity .5s}
+#fullLoader.hide{opacity:0;pointer-events:none}
+.loader-logo{font-size:2.5rem;font-weight:900;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:30px;animation:pulse 1.5s infinite}
+.loader-spinner{width:50px;height:50px;border:4px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@keyframes glow{0%,100%{box-shadow:0 0 5px rgba(243,156,18,.3)}50%{box-shadow:0 0 20px rgba(243,156,18,.6)}}
+@keyframes crownFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+#authContainer{display:none;min-height:100vh;background:var(--bg);padding:20px}
+.auth-wrapper{max-width:420px;margin:0 auto;padding-top:60px}
+.auth-header{text-align:center;margin-bottom:40px}
+.auth-header h1{font-size:2.2rem;font-weight:900;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-header p{color:var(--text2);margin-top:8px;font-size:.9rem}
+.auth-tabs{display:flex;background:var(--card);border-radius:var(--radius);padding:4px;margin-bottom:30px}
+.auth-tab{flex:1;padding:12px;text-align:center;border-radius:var(--radius-sm);cursor:pointer;font-weight:600;transition:var(--transition);color:var(--text2)}
+.auth-tab.active{background:var(--primary);color:#fff}
+.auth-form{display:none}.auth-form.active{display:block}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;margin-bottom:6px;font-weight:500;font-size:.85rem;color:var(--text2)}
+.form-input{width:100%;padding:14px 16px;background:var(--input-bg);border:2px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:.95rem;transition:var(--transition)}
+.form-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,92,231,.2)}
+.form-input::placeholder{color:var(--text3)}
+textarea.form-input{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:400px){.form-row{grid-template-columns:1fr}}
+select.form-input{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23636e72' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.password-toggle{position:relative}
+.password-toggle .toggle-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;color:var(--text3);cursor:pointer;font-size:1rem}
+.btn{width:100%;padding:14px;border-radius:var(--radius-sm);font-size:1rem;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--gradient);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(108,92,231,.4)}
+.btn-secondary{background:var(--card);color:var(--text);border:2px solid var(--border)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-premium{background:var(--premium-g);color:#fff;animation:glow 2s infinite}
+.btn-premium:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(243,156,18,.5)}
+.btn-sm{padding:8px 16px;font-size:.85rem;width:auto}
+.btn-xs{padding:5px 11px;font-size:.72rem;width:auto;border-radius:6px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
+.btn .spinner{width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+.auth-footer{text-align:center;margin-top:20px;color:var(--text2);font-size:.85rem}
+.auth-footer a{color:var(--primary);font-weight:600;cursor:pointer}
+.auth-divider{display:flex;align-items:center;margin:20px 0;color:var(--text3);font-size:.8rem}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.auth-divider span{padding:0 12px}
+
+#mainApp{display:none;min-height:100vh;padding-bottom:75px}
+.app-header{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-logo{font-size:1.3rem;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-right{display:flex;align-items:center;gap:14px}
+.header-icon{width:38px;height:38px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--text2);cursor:pointer;transition:var(--transition);position:relative;font-size:.95rem}
+.header-icon:hover{background:var(--primary);color:#fff}
+.notif-badge{position:absolute;top:-2px;right:-2px;width:18px;height:18px;background:var(--danger);border-radius:50%;font-size:.65rem;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+.header-balance{background:var(--gradient);color:#fff;padding:6px 14px;border-radius:20px;font-size:.85rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px}
+.header-back{width:38px;height:38px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--text);cursor:pointer;transition:var(--transition)}
+.header-back:hover{background:var(--primary);color:#fff}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:1000;background:var(--nav-bg);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding:8px 0 12px;max-width:100%}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:6px 0;transition:var(--transition);color:var(--text3)}
+.nav-item.active{color:var(--primary)}
+.nav-item i{font-size:1.2rem}
+.nav-item span{font-size:.65rem;font-weight:600}
+
+.content-area{padding-top:66px;min-height:100vh}
+.page{display:none;padding:16px;animation:fadeIn .3s ease}
+.page.active{display:block}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.section-title .see-all{font-size:.8rem;color:var(--primary);font-weight:500;cursor:pointer}
+
+/* WELCOME BANNER */
+.welcome-banner{background:var(--gradient);border-radius:var(--radius);padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+.welcome-banner::after{content:'';position:absolute;top:-50%;right:-30%;width:200px;height:200px;background:rgba(255,255,255,.1);border-radius:50%}
+.welcome-banner h2{font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:4px}
+.welcome-banner p{color:rgba(255,255,255,.8);font-size:.85rem}
+.welcome-banner .balance-display{margin-top:16px;font-size:1.8rem;font-weight:800;color:#fff}
+.welcome-banner .balance-label{font-size:.75rem;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px}
+
+/* PREMIUM BADGE */
+.premium-badge-inline{display:inline-flex;align-items:center;gap:4px;background:var(--premium-g);color:#fff;padding:2px 10px;border-radius:12px;font-size:.65rem;font-weight:700;letter-spacing:.5px;animation:glow 3s infinite}
+.premium-badge-inline i{animation:crownFloat 2s infinite}
+
+/* QUICK ACTIONS */
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.quick-action{background:var(--card);border-radius:var(--radius);padding:16px 10px;text-align:center;cursor:pointer;transition:var(--transition)}
+.quick-action:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.quick-action i{font-size:1.5rem;margin-bottom:8px;display:block}
+.quick-action span{font-size:.7rem;font-weight:600;color:var(--text2)}
+.quick-action:nth-child(1) i{color:var(--success)}
+.quick-action:nth-child(2) i{color:var(--danger)}
+.quick-action:nth-child(3) i{color:var(--warning)}
+.quick-action:nth-child(4) i{color:var(--info)}
+
+.announcement-card{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;border-left:4px solid var(--warning)}
+.announcement-card .ann-title{font-weight:600;font-size:.9rem;margin-bottom:4px}
+.announcement-card .ann-msg{font-size:.8rem;color:var(--text2)}
+.announcement-card .ann-time{font-size:.7rem;color:var(--text3);margin-top:6px}
+
+/* TOURNAMENT CARDS */
+.tournament-card{background:var(--card);border-radius:var(--radius);overflow:hidden;margin-bottom:14px;transition:var(--transition);border:1px solid var(--border)}
+.tournament-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.tournament-card.premium-card{border:2px solid #f39c12;position:relative}
+.tournament-card.premium-card::before{content:'👑 PREMIUM';position:absolute;top:10px;right:10px;background:var(--premium-g);color:#fff;padding:2px 8px;border-radius:10px;font-size:.6rem;font-weight:700;z-index:2;letter-spacing:.5px}
+.tc-header{background:var(--gradient);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.tc-header.live{background:linear-gradient(135deg,var(--danger),#e17055)}
+.tc-header.completed{background:linear-gradient(135deg,var(--text3),var(--border))}
+.tc-header.custom{background:var(--premium-g)}
+.tc-game{font-weight:700;color:#fff;font-size:.95rem}
+.tc-status{background:rgba(255,255,255,.2);padding:4px 10px;border-radius:20px;font-size:.7rem;font-weight:600;color:#fff;text-transform:uppercase}
+.tc-body{padding:14px 16px}
+.tc-title{font-weight:700;font-size:1rem;margin-bottom:10px}
+.tc-info{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.tc-info-item{text-align:center}
+.tc-info-item .label{font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.tc-info-item .value{font-size:.9rem;font-weight:700;margin-top:2px}
+.tc-info-item .value.prize{color:var(--success)}
+.tc-info-item .value.fee{color:var(--warning)}
+.tc-slots{margin-bottom:12px}
+.tc-slots-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.tc-slots-fill{height:100%;background:var(--gradient);border-radius:3px;transition:width .5s}
+.tc-slots-text{display:flex;justify-content:space-between;font-size:.72rem;color:var(--text3);margin-top:4px}
+.tc-footer{display:flex;align-items:center;justify-content:space-between}
+.tc-time{font-size:.78rem;color:var(--text2);display:flex;align-items:center;gap:6px}
+.tc-time i{color:var(--primary)}
+.tc-join-btn{padding:8px 24px;background:var(--gradient);color:#fff;border-radius:20px;font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--transition);border:none}
+.tc-join-btn:hover{transform:scale(1.05)}
+.tc-join-btn.joined{background:var(--success)}
+.tc-join-btn.full{background:var(--text3);cursor:not-allowed}
+.tc-join-btn:disabled{opacity:.6;cursor:not-allowed}
+
+/* PREMIUM SECTION */
+.premium-card-big{background:var(--card);border-radius:var(--radius);overflow:hidden;border:2px solid #f39c12;margin-bottom:20px}
+.premium-card-header{background:var(--premium-g);padding:24px;text-align:center;position:relative;overflow:hidden}
+.premium-card-header::after{content:'';position:absolute;top:-30%;right:-20%;width:150px;height:150px;background:rgba(255,255,255,.1);border-radius:50%}
+.premium-card-header .crown{font-size:3rem;margin-bottom:8px;display:block;animation:crownFloat 2s infinite}
+.premium-card-header h2{color:#fff;font-size:1.4rem;font-weight:800}
+.premium-card-header p{color:rgba(255,255,255,.85);font-size:.85rem;margin-top:4px}
+.premium-card-body{padding:20px}
+.premium-feature{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.premium-feature i{color:#f39c12;font-size:1rem;margin-top:3px;flex-shrink:0}
+.premium-feature .pf-text h4{font-size:.9rem;font-weight:600}
+.premium-feature .pf-text p{font-size:.78rem;color:var(--text2);margin-top:2px}
+.premium-plans{display:grid;gap:12px;margin-top:16px}
+.premium-plan{background:var(--bg);border:2px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:var(--transition);position:relative}
+.premium-plan:hover,.premium-plan.selected{border-color:#f39c12;box-shadow:0 0 15px rgba(243,156,18,.2)}
+.premium-plan.popular{border-color:#f39c12}
+.premium-plan.popular::before{content:'BEST VALUE';position:absolute;top:-10px;right:10px;background:var(--premium-g);color:#fff;padding:2px 10px;border-radius:10px;font-size:.6rem;font-weight:700}
+.premium-plan .plan-name{font-weight:700;font-size:.95rem}
+.premium-plan .plan-price{font-size:1.3rem;font-weight:800;color:#f39c12;margin-top:4px}
+.premium-plan .plan-price span{font-size:.75rem;font-weight:400;color:var(--text3)}
+.premium-plan .plan-features{margin-top:8px;font-size:.78rem;color:var(--text2)}
+.premium-status-card{background:var(--card);border-radius:var(--radius);padding:20px;border:2px solid #f39c12;text-align:center;margin-bottom:20px;animation:glow 3s infinite}
+.premium-status-card .crown{font-size:2.5rem;margin-bottom:8px}
+.premium-status-card h3{color:#f39c12;font-weight:800}
+.premium-status-card .expires{font-size:.82rem;color:var(--text2);margin-top:6px}
+
+/* WALLET */
+.wallet-card{background:var(--gradient);border-radius:var(--radius);padding:30px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.wallet-card::before{content:'';position:absolute;top:-60%;right:-20%;width:250px;height:250px;background:rgba(255,255,255,.08);border-radius:50%}
+.wallet-balance-label{font-size:.8rem;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:1px}
+.wallet-balance{font-size:2.8rem;font-weight:900;color:#fff;margin:8px 0}
+.wallet-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.wallet-action-btn{background:var(--card);border-radius:var(--radius);padding:18px;text-align:center;cursor:pointer;transition:var(--transition);border:1px solid var(--border)}
+.wallet-action-btn:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:var(--primary)}
+.wallet-action-btn i{font-size:1.5rem;margin-bottom:8px;display:block}
+.wallet-action-btn:first-child i{color:var(--success)}
+.wallet-action-btn:last-child i{color:var(--danger)}
+.wallet-action-btn span{font-size:.85rem;font-weight:600}
+
+.transaction-item{background:var(--card);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;border:1px solid var(--border)}
+.tx-icon{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.tx-icon.credit{background:rgba(0,184,148,.15);color:var(--success)}
+.tx-icon.debit{background:rgba(214,48,49,.15);color:var(--danger)}
+.tx-icon.pending{background:rgba(253,203,110,.15);color:var(--warning)}
+.tx-details{flex:1;min-width:0}
+.tx-desc{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-date{font-size:.72rem;color:var(--text3);margin-top:2px}
+.tx-amount{font-weight:700;font-size:.95rem;white-space:nowrap}
+.tx-amount.credit{color:var(--success)}
+.tx-amount.debit{color:var(--danger)}
+.tx-status{font-size:.65rem;padding:3px 8px;border-radius:10px;font-weight:600;text-transform:uppercase}
+.tx-status.approved{background:rgba(0,184,148,.15);color:var(--success)}
+.tx-status.pending{background:rgba(253,203,110,.15);color:var(--warning)}
+.tx-status.rejected{background:rgba(214,48,49,.15);color:var(--danger)}
+
+/* DEPOSIT */
+.deposit-section{background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:16px;border:1px solid var(--border)}
+.deposit-section h3{font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.deposit-section h3 i{color:var(--primary)}
+.amount-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.amount-chip{padding:8px 18px;background:var(--bg);border-radius:20px;font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--transition);border:2px solid var(--border)}
+.amount-chip:hover,.amount-chip.active{border-color:var(--primary);background:rgba(108,92,231,.1);color:var(--primary)}
+.qr-display{text-align:center;padding:20px}
+.qr-display img{border-radius:var(--radius);margin-bottom:12px;background:#fff;padding:10px}
+.upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:30px;text-align:center;cursor:pointer;transition:var(--transition)}
+.upload-area:hover{border-color:var(--primary);background:rgba(108,92,231,.05)}
+.upload-area i{font-size:2rem;color:var(--text3);margin-bottom:10px}
+.upload-area p{font-size:.85rem;color:var(--text2)}
+.upload-preview{margin-top:12px;position:relative;display:inline-block}
+.upload-preview img{max-height:200px;border-radius:var(--radius-sm)}
+.upload-preview .remove-btn{position:absolute;top:-8px;right:-8px;width:24px;height:24px;background:var(--danger);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.7rem}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gradient);border-radius:3px;transition:width .3s;width:0}
+
+/* PROFILE */
+.profile-header{text-align:center;padding:20px;margin-bottom:20px}
+.profile-avatar{width:100px;height:100px;border-radius:50%;border:4px solid var(--primary);margin:0 auto 14px;overflow:hidden;position:relative;cursor:pointer}
+.profile-avatar.premium-avatar{border-color:#f39c12;box-shadow:0 0 20px rgba(243,156,18,.3);animation:glow 3s infinite}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-avatar .edit-overlay{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);padding:6px;text-align:center;font-size:.7rem;color:#fff}
+.profile-name{font-size:1.3rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+.profile-email{font-size:.85rem;color:var(--text2)}
+.profile-game-info{font-size:.8rem;color:var(--primary);margin-top:4px}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;border:1px solid var(--border)}
+.stat-card .stat-val{font-size:1.4rem;font-weight:800;color:var(--primary)}
+.stat-card .stat-label{font-size:.7rem;color:var(--text3);text-transform:uppercase;margin-top:4px}
+.profile-menu{background:var(--card);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.profile-menu-item{display:flex;align-items:center;gap:14px;padding:16px;cursor:pointer;transition:var(--transition);border-bottom:1px solid var(--border)}
+.profile-menu-item:last-child{border-bottom:none}
+.profile-menu-item:hover{background:var(--bg)}
+.profile-menu-item i{width:36px;height:36px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:.95rem}
+.profile-menu-item .menu-text{flex:1}
+.profile-menu-item .menu-text h4{font-size:.9rem;font-weight:600}
+.profile-menu-item .menu-text p{font-size:.72rem;color:var(--text3)}
+.profile-menu-item .menu-arrow{color:var(--text3)}
+
+/* CUSTOM MATCH CREATE (Premium) */
+.create-match-section{background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:16px;border:2px solid #f39c12}
+.create-match-section h3{color:#f39c12;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+
+/* MATCH SCREENSHOT SUBMIT */
+.screenshot-submit-card{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+.screenshot-submit-card .ss-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.screenshot-submit-card .ss-title{font-weight:700;font-size:.9rem}
+
+/* FILTER TABS */
+.filter-tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch}
+.filter-tabs::-webkit-scrollbar{display:none}
+.filter-tab{padding:8px 18px;background:var(--card);border-radius:20px;font-size:.82rem;font-weight:600;white-space:nowrap;cursor:pointer;transition:var(--transition);border:1px solid var(--border);color:var(--text2)}
+.filter-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* REFERRAL */
+.referral-card{background:var(--gradient);border-radius:var(--radius);padding:24px;text-align:center;margin-bottom:20px;position:relative;overflow:hidden}
+.referral-card h3{color:#fff;font-size:1.1rem;margin-bottom:8px}
+.referral-card p{color:rgba(255,255,255,.8);font-size:.85rem;margin-bottom:16px}
+.referral-code-box{background:rgba(255,255,255,.2);border-radius:var(--radius-sm);padding:14px;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.referral-code-box .code{font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:3px}
+.referral-code-box .copy-icon{color:rgba(255,255,255,.8);cursor:pointer;font-size:1.1rem}
+.referral-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ref-stat{background:var(--card);border-radius:var(--radius);padding:16px;text-align:center;border:1px solid var(--border)}
+.ref-stat .ref-val{font-size:1.5rem;font-weight:800;color:var(--primary)}
+.ref-stat .ref-label{font-size:.72rem;color:var(--text3);margin-top:4px}
+
+/* SETTINGS */
+.settings-group{background:var(--card);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;border:1px solid var(--border)}
+.settings-group-title{padding:14px 16px;font-size:.8rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border)}
+.setting-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.setting-item:last-child{border-bottom:none}
+.setting-item .setting-label{display:flex;align-items:center;gap:12px;font-size:.9rem;font-weight:500}
+.setting-item .setting-label i{color:var(--primary);width:20px;text-align:center}
+.toggle-switch{width:48px;height:26px;background:var(--border);border-radius:13px;position:relative;cursor:pointer;transition:var(--transition)}
+.toggle-switch.active{background:var(--primary)}
+.toggle-switch::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:var(--transition)}
+.toggle-switch.active::after{transform:translateX(22px)}
+.setting-select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 12px;color:var(--text);font-size:.85rem}
+
+/* LEADERBOARD */
+.lb-top3{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-bottom:20px;padding:20px 0}
+.lb-top-item{text-align:center}.lb-top-item.first{order:2}.lb-top-item.second{order:1}.lb-top-item.third{order:3}
+.lb-top-avatar{width:60px;height:60px;border-radius:50%;margin:0 auto 8px;overflow:hidden;border:3px solid var(--text3)}
+.lb-top-item.first .lb-top-avatar{width:80px;height:80px;border-color:var(--warning)}
+.lb-top-avatar img{width:100%;height:100%;object-fit:cover}
+.lb-top-name{font-size:.8rem;font-weight:600}.lb-top-score{font-size:.75rem;color:var(--primary);font-weight:700}
+.lb-rank-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:.7rem;font-weight:800;color:#fff}
+.lb-top-item.first .lb-rank-badge{background:var(--warning)}
+.lb-top-item.second .lb-rank-badge{background:#c0c0c0}
+.lb-top-item.third .lb-rank-badge{background:#cd7f32}
+.lb-list-item{background:var(--card);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;border:1px solid var(--border)}
+.lb-list-rank{width:30px;text-align:center;font-weight:800;color:var(--text3)}
+.lb-list-name{flex:1;font-size:.88rem;font-weight:600}
+.lb-list-score{font-weight:700;color:var(--primary);font-size:.9rem}
+
+/* MODAL */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--overlay);z-index:9999;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-content{background:var(--bg2);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:500px;max-height:85vh;overflow-y:auto;padding:24px;animation:slideUp .3s ease}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.modal-title{font-size:1.1rem;font-weight:700;margin-bottom:16px;text-align:center}
+
+/* TOAST */
+.toast-container{position:fixed;top:80px;right:16px;z-index:99999;display:flex;flex-direction:column;gap:10px;max-width:350px}
+.toast{padding:14px 18px;border-radius:var(--radius-sm);color:#fff;font-size:.88rem;font-weight:500;display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;box-shadow:var(--shadow);min-width:280px}
+.toast.success{background:var(--success)}.toast.error{background:var(--danger)}.toast.warning{background:var(--warning);color:#333}.toast.info{background:var(--info)}
+.toast i{font-size:1.1rem}.toast-close{margin-left:auto;cursor:pointer;opacity:.8;font-size:.85rem}
+
+.empty-state{text-align:center;padding:40px 20px}
+.empty-state i{font-size:3rem;color:var(--text3);margin-bottom:14px}
+.empty-state h3{font-size:1rem;font-weight:600;margin-bottom:6px;color:var(--text2)}
+.empty-state p{font-size:.82rem;color:var(--text3)}
+
+.promo-input-wrapper{display:flex;gap:10px;margin-bottom:20px}
+.promo-input-wrapper .form-input{flex:1}
+.promo-input-wrapper .btn{width:auto;padding:14px 24px}
+
+/* MATCH HISTORY */
+.match-item{background:var(--card);border-radius:var(--radius);padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+.match-item-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.match-game{font-weight:700;font-size:.95rem}
+.match-result-badge{padding:4px 10px;border-radius:10px;font-size:.7rem;font-weight:700;text-transform:uppercase}
+.match-result-badge.won{background:rgba(0,184,148,.15);color:var(--success)}
+.match-result-badge.lost{background:rgba(214,48,49,.15);color:var(--danger)}
+.match-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.match-stat{text-align:center}
+.match-stat .ms-val{font-weight:700;font-size:.95rem}
+.match-stat .ms-label{font-size:.65rem;color:var(--text3);text-transform:uppercase}
+
+/* NOTIFS */
+.notif-item{background:var(--card);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;display:flex;gap:12px;border:1px solid var(--border);cursor:pointer;transition:var(--transition)}
+.notif-item.unread{border-left:4px solid var(--primary)}
+.notif-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.notif-icon.payment{background:rgba(0,184,148,.15);color:var(--success)}
+.notif-icon.match{background:rgba(108,92,231,.15);color:var(--primary)}
+.notif-icon.result{background:rgba(253,203,110,.15);color:var(--warning)}
+.notif-icon.system{background:rgba(9,132,227,.15);color:var(--info)}
+.notif-content{flex:1}.notif-title{font-size:.88rem;font-weight:600}.notif-msg{font-size:.78rem;color:var(--text2);margin-top:2px}.notif-time{font-size:.68rem;color:var(--text3);margin-top:4px}
+
+/* REPORT */
+.reason-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.reason-chip{padding:8px 14px;background:var(--bg);border-radius:20px;font-size:.8rem;cursor:pointer;transition:var(--transition);border:2px solid var(--border)}
+.reason-chip:hover,.reason-chip.active{border-color:var(--danger);color:var(--danger);background:rgba(214,48,49,.1)}
+
+@media(max-width:380px){.quick-actions{grid-template-columns:repeat(2,1fr)}.profile-stats{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:768px){.content-area{max-width:600px;margin:0 auto}.bottom-nav{max-width:600px;left:50%;transform:translateX(-50%)}.app-header{max-width:600px;left:50%;transform:translateX(-50%)}}
+
+:root{
+--primary:#8B5CF6!important;
+--primary-light:#C4B5FD!important;
+}
+[data-theme="dark"]{
+--bg:#050816!important;
+--bg2:#0F172A!important;
+--card:#111827!important;
+--card2:#1E293B!important;
+}
+.bottom-nav{
+box-shadow:0 -10px 30px rgba(139,92,246,.15)!important;
+background:rgba(15,23,42,.95)!important;
+backdrop-filter:blur(14px)!important;
+}
+.nav-item.active{
+color:#A78BFA!important;
+text-shadow:0 0 15px rgba(167,139,250,.8)!important;
+}
+.card,.stat-card,.tournament-card{
+background:rgba(255,255,255,.05)!important;
+backdrop-filter:blur(14px)!important;
+border:1px solid rgba(255,255,255,.08)!important;
+box-shadow:0 8px 25px rgba(0,0,0,.35)!important;
+}
+.btn-primary{
+background:linear-gradient(135deg,#8B5CF6,#4F46E5)!important;
+box-shadow:0 0 20px rgba(139,92,246,.4)!important;
+}
+
+</style>
+</head>
+<body>
+
+<div id="fullLoader"><div class="loader-logo"> 𝔚𝔢𝔩𝔠𝔬𝔪𝔢 𝔷𝔵 𝔟𝔞𝔱𝔱𝔩𝔢 </div><div class="loader-spinner"></div></div>
+<div class="toast-container" id="toastContainer"></div>
+
+<div id="authContainer">
+<div class="auth-wrapper">
+<div class="auth-header"><h1>⚔️ ZX BATTLE </h1><p>Battle Royale Tournament Platform</p></div>
+<div class="auth-tabs"><div class="auth-tab active" onclick="switchAuthTab('login')">Login</div><div class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div></div>
+<form class="auth-form active" id="loginForm" onsubmit="handleLogin(event)">
+<div class="form-group"><label>Email</label><input type="email" class="form-input" id="loginEmail" placeholder="Enter email" required></div>
+<div class="form-group"><label>Password</label><div class="password-toggle"><input type="password" class="form-input" id="loginPassword" placeholder="Password" required><button type="button" class="toggle-btn" onclick="togglePassword('loginPassword',this)"><i class="fas fa-eye"></i></button></div></div>
+<button type="submit" class="btn btn-primary" id="loginBtn"><span>Login</span></button>
+<div class="auth-divider"><span>OR</span></div>
+<p class="auth-footer">No account? <a onclick="switchAuthTab('signup')">Sign Up</a></p>
+</form>
+<form class="auth-form" id="signupForm" onsubmit="handleSignup(event)">
+<div class="form-group"><label>Full Name</label><input type="text" class="form-input" id="signupName" placeholder="Your name" required></div>
+<div class="form-group"><label>Email</label><input type="email" class="form-input" id="signupEmail" placeholder="Email" required></div>
+<div class="form-group"><label>Phone</label><input type="tel" class="form-input" id="signupPhone" placeholder="Phone" required></div>
+<div class="form-row">
+<div class="form-group"><label>Game Name</label><input type="text" class="form-input" id="signupGameName" placeholder="In-game name"></div>
+<div class="form-group"><label>Game UID</label><input type="text" class="form-input" id="signupGameUID" placeholder="Game UID"></div>
+</div>
+<div class="form-group"><label>Password</label><div class="password-toggle"><input type="password" class="form-input" id="signupPassword" placeholder="Min 6 chars" required minlength="6"><button type="button" class="toggle-btn" onclick="togglePassword('signupPassword',this)"><i class="fas fa-eye"></i></button></div></div>
+<div class="form-group"><label>Referral Code (Optional)</label><input type="text" class="form-input" id="signupReferral" placeholder="Referral code"></div>
+<button type="submit" class="btn btn-primary" id="signupBtn"><span>Sign Up</span></button>
+<div class="auth-divider"><span>OR</span></div>
+<p class="auth-footer">Have account? <a onclick="switchAuthTab('login')">Login</a></p>
+</form>
+</div>
+</div>
+
+<div id="mainApp">
+<div class="app-header" id="mainHeader">
+<div class="header-left"><div class="header-back" id="headerBack" style="display:none" onclick="goBack()"><i class="fas fa-arrow-left"></i></div><div class="header-logo" id="headerTitle">⚔️ ZXBATTLE</div></div>
+<div class="header-right"><div class="header-balance" onclick="navigateTo('wallet')"><i class="fas fa-wallet"></i> ₹<span id="headerBal">0</span></div><div class="header-icon" onclick="navigateTo('notifications')"><i class="fas fa-bell"></i><span class="notif-badge" id="notifBadge" style="display:none">0</span></div></div>
+</div>
+<div class="content-area" id="contentArea">
+
+<div class="page active" id="homePage">
+<div class="welcome-banner"><p class="balance-label">TOTAL BALANCE</p><div class="balance-display">₹<span id="homeBal">0</span></div><h2 id="welcomeUser">Welcome back!</h2><p>Join tournaments & win prizes</p></div>
+<div class="quick-actions">
+<div class="quick-action" onclick="navigateTo('deposit')"><i class="fas fa-plus-circle"></i><span>Deposit</span></div>
+<div class="quick-action" onclick="navigateTo('withdraw')"><i class="fas fa-minus-circle"></i><span>Withdraw</span></div>
+<div class="quick-action" onclick="navigateTo('referral')"><i class="fas fa-gift"></i><span>Referral</span></div>
+<div class="quick-action" onclick="navigateTo('premium')"><i class="fas fa-crown"></i><span>Premium</span></div>
+</div>
+<div id="announcementsList"></div>
+<div class="section-title"><span>🔥 Upcoming Matches</span><span class="see-all" onclick="navigateTo('tournaments')">See All</span></div>
+<div id="homeTournaments"></div>
+</div>
+
+<div class="page" id="tournamentsPage">
+<div class="filter-tabs" id="tournamentFilters">
+<div class="filter-tab active" onclick="filterTournaments('all')">All</div>
+<div class="filter-tab" onclick="filterTournaments('upcoming')">Upcoming</div>
+<div class="filter-tab" onclick="filterTournaments('live')">Live</div>
+<div class="filter-tab" onclick="filterTournaments('completed')">Completed</div>
+<div class="filter-tab" onclick="filterTournaments('custom')">Custom</div>
+</div>
+<div id="tournamentsList"></div>
+</div>
+
+<div class="page" id="tournamentDetailPage"><div id="tournamentDetailContent"></div></div>
+
+<div class="page" id="walletPage">
+<div class="wallet-card"><p class="wallet-balance-label">AVAILABLE BALANCE</p><div class="wallet-balance">₹<span id="walletBal">0</span></div></div>
+<div class="wallet-actions"><div class="wallet-action-btn" onclick="navigateTo('deposit')"><i class="fas fa-plus-circle"></i><span>Deposit</span></div><div class="wallet-action-btn" onclick="navigateTo('withdraw')"><i class="fas fa-minus-circle"></i><span>Withdraw</span></div></div>
+<div class="section-title"><span>Transactions</span></div>
+<div id="walletTransactions"></div>
+</div>
+
+<div class="page" id="depositPage">
+<div class="deposit-section"><h3><i class="fas fa-wallet"></i> Enter Amount</h3>
+<div class="amount-chips"><div class="amount-chip" onclick="setDepAmt(50)">₹50</div><div class="amount-chip" onclick="setDepAmt(100)">₹100</div><div class="amount-chip" onclick="setDepAmt(200)">₹200</div><div class="amount-chip" onclick="setDepAmt(500)">₹500</div></div>
+<div class="form-group"><input type="number" class="form-input" id="depositAmount" placeholder="Enter amount" min="10"></div>
+<button class="btn btn-primary" onclick="generateQR()" id="genQRBtn"><span>Generate QR Code</span></button></div>
+<div class="deposit-section" id="qrSection" style="display:none"><h3><i class="fas fa-qrcode"></i> Scan & Pay</h3>
+<div class="qr-display"><img id="qrImage" src="" alt="QR" width="200" height="200"><p style="color:var(--text2);font-size:.85rem">Pay to: <strong id="displayUPI">-</strong></p><p style="font-size:1.2rem;font-weight:800;color:var(--success);margin:8px 0">₹<span id="displayAmount">0</span></p><p style="color:var(--primary);cursor:pointer;font-size:.8rem" onclick="copyUPI()"><i class="fas fa-copy"></i> Copy UPI</p></div></div>
+<div class="deposit-section" id="utrSection" style="display:none"><h3><i class="fas fa-receipt"></i> Payment Details</h3>
+<div class="form-group"><label>UTR Number</label><input type="text" class="form-input" id="utrInput" placeholder="12-digit UTR"></div>
+<div class="form-group"><label>Payment Screenshot</label><div class="upload-area" id="screenshotUpload" onclick="document.getElementById('screenshotFile').click()"><i class="fas fa-cloud-upload-alt"></i><p>Click to upload</p></div><input type="file" id="screenshotFile" accept="image/*" style="display:none" onchange="previewSS(this)"><div class="upload-preview" id="ssPreview" style="display:none"></div><div class="progress-bar" id="uploadProgress" style="display:none"><div class="progress-fill" id="uploadFill"></div></div></div>
+<button class="btn btn-success" onclick="submitDeposit()" id="submitDepBtn"><span>Submit Deposit</span></button></div>
+<div class="section-title" style="margin-top:20px"><span>Deposit History</span></div><div id="depositHistory"></div>
+</div>
+
+<div class="page" id="withdrawPage">
+<div class="wallet-card" style="margin-bottom:16px"><p class="wallet-balance-label">WITHDRAWABLE</p><div class="wallet-balance">₹<span id="withdrawBal">0</span></div></div>
+<div class="deposit-section"><h3><i class="fas fa-university"></i> Withdraw</h3>
+<div class="form-group"><label>Amount</label><input type="number" class="form-input" id="withdrawAmount" placeholder="Amount" min="10"></div>
+<div class="form-group"><label>UPI ID</label><input type="text" class="form-input" id="withdrawUPI" placeholder="example@paytm"></div>
+<button class="btn btn-primary" onclick="submitWithdraw()" id="submitWithBtn"><span>Submit Withdraw</span></button></div>
+<div class="section-title" style="margin-top:20px"><span>Withdraw History</span></div><div id="withdrawHistory"></div>
+</div>
+
+<div class="page" id="profilePage">
+<div class="profile-header">
+<div class="profile-avatar" id="profileAvatarWrap" onclick="document.getElementById('profileImageInput').click()"><img id="profileImg" src="https://ui-avatars.com/api/?name=User&background=6C5CE7&color=fff&size=200" alt=""><div class="edit-overlay"><i class="fas fa-camera"></i></div></div>
+<input type="file" id="profileImageInput" accept="image/*" style="display:none" onchange="uploadProfileImage(this)">
+<h2 class="profile-name"><span id="profileName">User</span> <span id="premiumBadgeProfile" style="display:none" class="premium-badge-inline"><i class="fas fa-crown"></i> PRO</span></h2>
+<p class="profile-email" id="profileEmail">-</p>
+<p class="profile-game-info" id="profileGameInfo"></p>
+</div>
+<div class="profile-stats">
+<div class="stat-card"><div class="stat-val" id="statMatches">0</div><div class="stat-label">Matches</div></div>
+<div class="stat-card"><div class="stat-val" id="statWins">0</div><div class="stat-label">Wins</div></div>
+<div class="stat-card"><div class="stat-val" id="statEarnings">₹0</div><div class="stat-label">Earnings</div></div>
+</div>
+<div class="profile-menu">
+<div class="profile-menu-item" onclick="navigateTo('editProfile')"><i class="fas fa-user-edit" style="background:rgba(108,92,231,.15);color:var(--primary)"></i><div class="menu-text"><h4>Edit Profile</h4><p>Update details & game info</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('premium')"><i class="fas fa-crown" style="background:rgba(243,156,18,.15);color:#f39c12"></i><div class="menu-text"><h4>Premium</h4><p id="premiumMenuStatus">Upgrade to Premium</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('createMatch')" id="createMatchMenuItem" style="display:none"><i class="fas fa-plus-circle" style="background:rgba(243,156,18,.15);color:#f39c12"></i><div class="menu-text"><h4>Create Match</h4><p>Host custom matches</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('screenshotSubmit')" id="ssSubmitMenuItem" style="display:none"><i class="fas fa-camera" style="background:rgba(0,184,148,.15);color:var(--success)"></i><div class="menu-text"><h4>Submit Results</h4><p>Upload match screenshots</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('matchHistory')"><i class="fas fa-history" style="background:rgba(0,206,201,.15);color:var(--secondary)"></i><div class="menu-text"><h4>Match History</h4><p>Past matches</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('leaderboard')"><i class="fas fa-trophy" style="background:rgba(253,203,110,.15);color:var(--warning)"></i><div class="menu-text"><h4>Leaderboard</h4><p>Rankings</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('referral')"><i class="fas fa-gift" style="background:rgba(108,92,231,.15);color:var(--primary)"></i><div class="menu-text"><h4>Referral</h4><p>Refer & earn</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('promo')"><i class="fas fa-ticket-alt" style="background:rgba(9,132,227,.15);color:var(--info)"></i><div class="menu-text"><h4>Promo Code</h4><p>Apply codes</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('report')"><i class="fas fa-flag" style="background:rgba(214,48,49,.15);color:var(--danger)"></i><div class="menu-text"><h4>Report Player</h4><p>Report cheating</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="navigateTo('settings')"><i class="fas fa-cog" style="background:rgba(99,110,114,.15);color:var(--text3)"></i><div class="menu-text"><h4>Settings</h4><p>Theme, Language</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+<div class="profile-menu-item" onclick="handleLogout()" style="color:var(--danger)"><i class="fas fa-sign-out-alt" style="background:rgba(214,48,49,.15);color:var(--danger)"></i><div class="menu-text"><h4>Logout</h4><p>Sign out</p></div><i class="fas fa-chevron-right menu-arrow"></i></div>
+</div>
+</div>
+
+<div class="page" id="editProfilePage">
+<div class="deposit-section"><h3><i class="fas fa-user-edit"></i> Edit Profile</h3>
+<div class="form-group"><label>Full Name</label><input type="text" class="form-input" id="editName" placeholder="Name"></div>
+<div class="form-group"><label>Phone</label><input type="tel" class="form-input" id="editPhone" placeholder="Phone"></div>
+<div class="form-row">
+<div class="form-group"><label>Game Name (In-Game)</label><input type="text" class="form-input" id="editGameName" placeholder="In-game name"></div>
+<div class="form-group"><label>Game UID</label><input type="text" class="form-input" id="editGameUID" placeholder="Game UID"></div>
+</div>
+<div class="form-group"><label>Game</label><select class="form-input" id="editGameType"><option value="">Select Game</option><option>Free Fire</option><option>BGMI</option><option>PUBG</option><option>COD Mobile</option><option>Fortnite</option></select></div>
+<button class="btn btn-primary" onclick="saveProfile()" id="saveProfileBtn"><span>Save Changes</span></button></div>
+</div>
+
+<div class="page" id="premiumPage">
+<div id="premiumContent"></div>
+</div>
+
+<div class="page" id="createMatchPage">
+<div id="createMatchContent"></div>
+</div>
+
+<div class="page" id="screenshotSubmitPage">
+<div class="section-title"><span>📸 Submit Match Results</span></div>
+<div id="ssSubmitList"></div>
+</div>
+
+<div class="page" id="matchHistoryPage"><div id="matchHistoryList"></div></div>
+
+<div class="page" id="leaderboardPage">
+<div class="section-title"><span>Select Tournament</span></div>
+<select class="form-input" id="lbTournamentSelect" onchange="loadLeaderboard(this.value)" style="margin-bottom:16px"><option value="">-- Select --</option></select>
+<div id="leaderboardContent"></div>
+</div>
+
+<div class="page" id="notificationsPage"><div id="notificationsList"></div></div>
+
+<div class="page" id="referralPage">
+<div class="referral-card"><h3>Refer & Earn</h3><p>Share your code, earn bonus</p>
+<div class="referral-code-box"><span class="code" id="myReferralCode">---</span><i class="fas fa-copy copy-icon" onclick="copyRefCode()"></i></div>
+<button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;margin:0 auto" onclick="shareReferral()"><i class="fas fa-share-alt"></i> Share</button></div>
+<div class="referral-stats"><div class="ref-stat"><div class="ref-val" id="refCount">0</div><div class="ref-label">Referrals</div></div><div class="ref-stat"><div class="ref-val" id="refEarnings">₹0</div><div class="ref-label">Earnings</div></div></div>
+<div class="section-title" style="margin-top:20px"><span>History</span></div><div id="referralHistory"></div>
+</div>
+
+<div class="page" id="promoPage">
+<div class="deposit-section"><h3><i class="fas fa-ticket-alt"></i> Apply Promo Code</h3>
+<div class="promo-input-wrapper"><input type="text" class="form-input" id="promoInput" placeholder="Enter code" style="text-transform:uppercase"><button class="btn btn-primary" onclick="applyPromo()" id="applyPromoBtn"><span>Apply</span></button></div></div>
+</div>
+
+<div class="page" id="reportPage">
+<div class="deposit-section"><h3><i class="fas fa-flag" style="color:var(--danger)"></i> Report Player</h3>
+<div class="form-group"><label>Player ID / Name</label><input type="text" class="form-input" id="reportPlayerId" placeholder="Player ID or name"></div>
+<div class="form-group"><label>Match ID</label><input type="text" class="form-input" id="reportMatchId" placeholder="Match ID"></div>
+<div class="form-group"><label>Reason</label><div class="reason-chips"><div class="reason-chip" onclick="selectReason(this,'Hacking')">Hacking</div><div class="reason-chip" onclick="selectReason(this,'Teaming')">Teaming</div><div class="reason-chip" onclick="selectReason(this,'Abuse')">Abuse</div><div class="reason-chip" onclick="selectReason(this,'Other')">Other</div></div></div>
+<div class="form-group"><label>Description</label><textarea class="form-input" id="reportDesc" rows="3" placeholder="Describe issue"></textarea></div>
+<div class="form-group"><label>Proof Screenshot</label><div class="upload-area" onclick="document.getElementById('reportSS').click()"><i class="fas fa-cloud-upload-alt"></i><p>Upload proof</p></div><input type="file" id="reportSS" accept="image/*" style="display:none" onchange="previewReportImg(this)"><div class="upload-preview" id="reportImgPreview" style="display:none"></div></div>
+<button class="btn btn-danger" onclick="submitReport()" id="submitReportBtn"><span>Submit Report</span></button></div>
+</div>
+
+<div class="page" id="settingsPage">
+<div class="settings-group"><div class="settings-group-title">Appearance</div>
+<div class="setting-item"><div class="setting-label"><i class="fas fa-moon"></i> Dark Mode</div><div class="toggle-switch active" id="themeToggle" onclick="toggleTheme()"></div></div></div>
+<div class="settings-group"><div class="settings-group-title">Language</div>
+<div class="setting-item"><div class="setting-label"><i class="fas fa-language"></i> Language</div><select class="setting-select" id="langSelect" onchange="changeLang(this.value)"><option value="en">English</option><option value="hi">हिन्दी</option></select></div></div>
+</div>
+
+</div> <div class="bottom-nav">
+<div class="nav-item active" onclick="playNavSound(); triggerZXClickEffect(this); navigateTo('home')"><i class="fas fa-home"></i><span>Home</span></div>
+<div class="nav-item" onclick="playNavSound(); triggerZXClickEffect(this); navigateTo('tournaments')"><i class="fas fa-gamepad"></i><span>Matches</span></div>
+<div class="nav-item" onclick="playNavSound(); triggerZXClickEffect(this); navigateTo('wallet')"><i class="fas fa-wallet"></i><span>Wallet</span></div>
+<div class="nav-item" onclick="playNavSound(); triggerZXClickEffect(this); navigateTo('profile')"><i class="fas fa-user"></i><span>Profile</span></div>
+</div>
+</div> <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+<div class="modal-content" onclick="event.stopPropagation()"><div class="modal-handle"></div><div id="modalBody"></div></div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCrhbYm0dmBJ-grUwIbYRURpdY7uVFeow8",
+  authDomain: "zx-battle-6db12.firebaseapp.com",
+  projectId: "zx-battle-6db12",
+  storageBucket: "zx-battle-6db12.firebasestorage.app",
+  messagingSenderId: "745571617768",
+  appId: "1:745571617768:web:014331004d1ed307a0f25d"
+};
+firebase.initializeApp(firebaseConfig);
+var auth=firebase.auth(),db=firebase.database();
+var currentUser=null,userProfile=null,userWallet=0,currentPage='home',pageHistory=['home'],allTournaments={},currentFilter='all',selectedReason='',depScreenshotURL='',reportSSURL='',countdownTimers={};
+var IMGBB_KEY='799e8ebf61d3da08b18fb6a737cdb4a2';
+
+function showToast(m,t,d){t=t||'info';d=d||3500;var ic={success:'fa-check-circle',error:'fa-times-circle',warning:'fa-exclamation-triangle',info:'fa-info-circle'};var el=document.createElement('div');el.className='toast '+t;el.innerHTML='<i class="fas '+ic[t]+'"></i><span>'+m+'</span><span class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></span>';document.getElementById('toastContainer').appendChild(el);setTimeout(function(){el.style.opacity='0';setTimeout(function(){el.remove()},300)},d)}
+function showLoader(id){var b=document.getElementById(id);if(!b)return;b.disabled=true;b._o=b.innerHTML;b.innerHTML='<div class="spinner"></div>'}
+function hideLoader(id){var b=document.getElementById(id);if(!b)return;b.disabled=false;b.innerHTML=b._o||''}
+function fmtDate(ts){if(!ts)return'';return new Date(ts).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}
+function emptyState(i,t,m){return'<div class="empty-state"><i class="fas '+i+'"></i><h3>'+t+'</h3><p>'+(m||'')+'</p></div>'}
+function copyText(t){try{var a=document.createElement('textarea');a.value=t;a.style.position='fixed';a.style.opacity='0';document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);showToast('Copied!','success')}catch(e){}}
+function generateRefCode(uid){return'BZ'+uid.substring(0,6).toUpperCase()}
+function isPremium(){return userProfile&&userProfile.premium===true&&userProfile.premiumExpiry&&userProfile.premiumExpiry>Date.now()}
+
+async function uploadToImgBB(file,cb){return new Promise(function(res,rej){var fd=new FormData();fd.append('image',file);fd.append('key',IMGBB_KEY);var xhr=new XMLHttpRequest();xhr.open('POST','https://api.imgbb.com/1/upload');xhr.upload.onprogress=function(e){if(e.lengthComputable&&cb)cb(Math.round((e.loaded/e.total)*100))};xhr.onload=function(){if(xhr.status===200){var r=JSON.parse(xhr.responseText);if(r.data&&r.data.url)res(r.data.url);else rej('Failed')}else rej('Failed')};xhr.onerror=function(){rej('Error')};xhr.send(fd)})}
+
+/* NAV */
+var mainPages=['home','tournaments','wallet','profile'];
+var pageToId={home:'homePage',tournaments:'tournamentsPage',tournamentDetail:'tournamentDetailPage',wallet:'walletPage',deposit:'depositPage',withdraw:'withdrawPage',profile:'profilePage',editProfile:'editProfilePage',premium:'premiumPage',createMatch:'createMatchPage',screenshotSubmit:'screenshotSubmitPage',matchHistory:'matchHistoryPage',leaderboard:'leaderboardPage',notifications:'notificationsPage',referral:'referralPage',promo:'promoPage',report:'reportPage',settings:'settingsPage'};
+var pageTitlesMap={home:'⚔️ ZX BATTLE',tournaments:'Matches',wallet:'Wallet',profile:'Profile',deposit:'Deposit',withdraw:'Withdraw',editProfile:'Edit Profile',premium:'Premium',createMatch:'Create Match',screenshotSubmit:'Submit Results',matchHistory:'Match History',leaderboard:'Leaderboard',notifications:'Notifications',referral:'Referral',promo:'Promo Code',report:'Report Player',settings:'Settings',tournamentDetail:'Tournament'};
+
+// ग्लोबल संकेत (Global Audio Objects for precaching fallback handles)
+var zxSounds = {
+  'home': new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-84.wav'),
+  'tournaments': new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-84.wav'),
+  'wallet': new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav'),
+  'profile': new Audio('https://assets.mixkit.co/active_storage/sfx/2569/2569-84.wav')
+};
+
+function navigateTo(page,data){
+document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});
+var tid=pageToId[page];if(tid)document.getElementById(tid).classList.add('active');
+var isMain=mainPages.indexOf(page)!==-1;
+document.getElementById('headerBack').style.display=isMain?'none':'flex';
+document.getElementById('headerTitle').textContent=pageTitlesMap[page]||'⚔️ ZX BATTLE';
+document.querySelectorAll('.nav-item').forEach(function(ni,i){ni.classList.toggle('active',mainPages[i]===page||(!isMain&&mainPages[i]===getParent(page)))});
+if(page!==currentPage){pageHistory.push(page);currentPage=page}
+document.querySelector('.bottom-nav').style.display=isMain?'flex':'none';
+loadPage(page,data);window.scrollTo(0,0);
+}
+
+// एकदम सेफ और सुपर-रिस्पॉन्सिव विजुअल क्लिक遗 इफ़ेक्ट
+function triggerZXClickEffect(el) {
+  try {
+    if (!el) return;
+    el.style.transform = 'scale(0.88)';
+    el.style.backgroundColor = 'rgba(108, 92, 231, 0.2)';
+    el.style.transition = 'all 0.1s ease';
+    setTimeout(function() {
+      el.style.transform = 'scale(1)';
+      el.style.backgroundColor = 'transparent';
+    }, 100);
+  } catch(e) { console.log(e); }
+}
+
+function getParent(p){if(['deposit','withdraw'].indexOf(p)!==-1)return'wallet';if(p==='tournamentDetail')return'tournaments';return'profile'}
+function goBack(){pageHistory.pop();var prev=pageHistory[pageHistory.length-1]||'home';currentPage=prev;navigateTo(prev)}
+
+function loadPage(p,d){
+switch(p){
+case'home':loadHome();break;case'tournaments':loadTournaments();break;case'tournamentDetail':loadTournamentDetail(d);break;
+case'wallet':loadWallet();break;case'deposit':loadDepositHistory();break;case'withdraw':loadWithdrawHistory();break;
+case'profile':loadProfile();break;case'editProfile':loadEditProfile();break;case'premium':loadPremium();break;
+case'createMatch':loadCreateMatch();break;case'screenshotSubmit':loadSSSubmit();break;
+case'matchHistory':loadMatchHistory();break;case'notifications':loadNotifications();break;
+case'referral':loadReferral();break;case'leaderboard':loadLBTournaments();break;case'settings':loadSettings();break;
+}}
+
+/* AUTH */
+function switchAuthTab(tab){document.querySelectorAll('.auth-tab').forEach(function(t,i){t.classList.toggle('active',tab==='login'?i===0:i===1)});document.getElementById('loginForm').classList.toggle('active',tab==='login');document.getElementById('signupForm').classList.toggle('active',tab==='signup')}
+function togglePassword(id,btn){var inp=document.getElementById(id);inp.type=inp.type==='password'?'text':'password';btn.innerHTML=inp.type==='password'?'<i class="fas fa-eye"></i>':'<i class="fas fa-eye-slash"></i>'}
+
+async function handleLogin(e){e.preventDefault();showLoader('loginBtn');try{await auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value.trim(),document.getElementById('loginPassword').value);showToast('Login successful!','success')}catch(err){showToast(err.message,'error')}hideLoader('loginBtn')}
+
+async function handleSignup(e){
+e.preventDefault();showLoader('signupBtn');
+try{
+var name=document.getElementById('signupName').value.trim();
+var email=document.getElementById('signupEmail').value.trim();
+var phone=document.getElementById('signupPhone').value.trim();
+var gameName=document.getElementById('signupGameName').value.trim();
+var gameUID=document.getElementById('signupGameUID').value.trim();
+var pass=document.getElementById('signupPassword').value;
+var ref=document.getElementById('signupReferral').value.trim().toUpperCase();
+var cred=await auth.createUserWithEmailAndPassword(email,pass);
+var uid=cred.user.uid;
+await db.ref('users/'+uid+'/profile').set({name:name,email:email,phone:phone,gameName:gameName,gameUID:gameUID,gameType:'',profileImage:'',referralCode:generateRefCode(uid),referredBy:ref||'',premium:false,premiumExpiry:0,premiumPlan:'',createdAt:Date.now(),banned:false});
+await db.ref('users/'+uid+'/wallet').set({balance:0});
+if(ref){processReferral(uid,name,ref)}
+showToast('Account created!','success');
+}catch(err){showToast(err.message,'error')}
+hideLoader('signupBtn');
+}
+
+async function processReferral(newUid,newName,refCode){
+try{var snap=await db.ref('users').orderByChild('profile/referralCode').equalTo(refCode).once('value');
+if(!snap.exists())return;var refUid=Object.keys(snap.val())[0];if(refUid===newUid)return;
+var bSnap=await db.ref('settings/referralBonus').once('value');var bonus=bSnap.val()||10;
+var rBal=await db.ref('users/'+refUid+'/wallet/balance').once('value');
+await db.ref('users/'+refUid+'/wallet/balance').set((rBal.val()||0)+bonus);
+await db.ref('users/'+refUid+'/transactions').push({type:'referral',amount:bonus,status:'approved',description:'Referral: '+newName,timestamp:Date.now()});
+await db.ref('users/'+refUid+'/referrals').push({userId:newUid,name:newName,timestamp:Date.now(),bonus:bonus});
+await db.ref('notifications/'+refUid).push({title:'Referral Bonus!',message:newName+' joined! +₹'+bonus,type:'payment',read:false,timestamp:Date.now()});
+}catch(e){}}
+
+function handleLogout(){showModal('<div class="modal-title">Logout?</div><div style="display:flex;gap:10px;margin-top:20px"><button class="btn btn-secondary" onclick="closeModal()" style="flex:1">Cancel</button><button class="btn btn-danger" onclick="auth.signOut();closeModal()" style="flex:1">Logout</button></div>')}
+
+var listeners=[];
+auth.onAuthStateChanged(function(user){
+if(user){currentUser=user;document.getElementById('authContainer').style.display='none';document.getElementById('mainApp').style.display='block';initApp()}
+else{currentUser=null;userProfile=null;document.getElementById('authContainer').style.display='block';document.getElementById('mainApp').style.display='none';listeners.forEach(function(l){l.ref.off(l.ev)});listeners=[]}
+setTimeout(function(){document.getElementById('fullLoader').classList.add('hide')},800);
+});
+
+function initApp(){setupListeners();navigateTo('home');var t=localStorage.getItem('bz_theme')||'dark';document.documentElement.setAttribute('data-theme',t)}
+
+function setupListeners(){
+if(!currentUser)return;var uid=currentUser.uid;
+var wRef=db.ref('users/'+uid+'/wallet/balance');wRef.on('value',function(s){userWallet=s.val()||0;updateBal()});listeners.push({ref:wRef,ev:'value'});
+var pRef=db.ref('users/'+uid+'/profile');pRef.on('value',function(s){userProfile=s.val();updateProfileUI()});listeners.push({ref:pRef,ev:'value'});
+var nRef=db.ref('notifications/'+uid);nRef.on('value',function(s){var u=0;if(s.exists())s.forEach(function(c){if(!c.val().read)u++});var b=document.getElementById('notifBadge');if(u>0){b.style.display='flex';b.textContent=u>9?'9+':u}else b.style.display='none'});listeners.push({ref:nRef,ev:'value'});
+var tRef=db.ref('tournaments');tRef.on('value',function(s){allTournaments=s.val()||{};if(currentPage==='home')renderHomeTournaments();if(currentPage==='tournaments')renderTournaments()});listeners.push({ref:tRef,ev:'value'});
+var aRef=db.ref('announcements');aRef.on('value',function(s){if(currentPage==='home')renderAnnouncements(s.val())});listeners.push({ref:aRef,ev:'value'});
+}
+
+function updateBal(){document.getElementById('headerBal').textContent=userWallet;document.getElementById('homeBal').textContent=userWallet;document.getElementById('walletBal').textContent=userWallet;document.getElementById('withdrawBal').textContent=userWallet}
+function updateProfileUI(){
+if(!userProfile)return;
+var name=userProfile.name||'User';
+document.getElementById('welcomeUser').textContent='Welcome, '+name+'!';
+document.getElementById('profileName').textContent=name;
+document.getElementById('profileEmail').textContent=userProfile.email||'';
+var gameInfo='';
+if(userProfile.gameName)gameInfo+=userProfile.gameName;
+if(userProfile.gameUID)gameInfo+=(gameInfo?' | UID: ':'')+userProfile.gameUID;
+if(userProfile.gameType)gameInfo+=(gameInfo?' | ':'')+userProfile.gameType;
+document.getElementById('profileGameInfo').textContent=gameInfo;
+var img=userProfile.profileImage||'https://ui-avatars.com/api/?name='+encodeURIComponent(name)+'&background=6C5CE7&color=fff&size=200';
+document.getElementById('profileImg').src=img;
+var prem=isPremium();
+document.getElementById('premiumBadgeProfile').style.display=prem?'inline-flex':'none';
+document.getElementById('premiumMenuStatus').textContent=prem?'Premium Active ✨':'Upgrade to Premium';
+document.getElementById('createMatchMenuItem').style.display=prem?'flex':'none';
+document.getElementById('ssSubmitMenuItem').style.display=prem?'flex':'none';
+if(prem)document.getElementById('profileAvatarWrap').classList.add('premium-avatar');
+else document.getElementById('profileAvatarWrap').classList.remove('premium-avatar');
+
+// लाइव ऐड स्टेटस चेक को ट्रिगर किया
+if (typeof checkPremiumAdStatus === 'function') checkPremiumAdStatus();
+}
+
+/* HOME - ONLY UPCOMING MATCHES */
+function loadHome(){
+renderHomeTournaments();
+db.ref('announcements').orderByChild('timestamp').limitToLast(3).once('value',function(s){renderAnnouncements(s.val())});
+if(currentUser)db.ref('users/'+currentUser.uid+'/stats').once('value',function(s){var st=s.val()||{};document.getElementById('statMatches').textContent=st.matches||0;document.getElementById('statWins').textContent=st.wins||0;document.getElementById('statEarnings').textContent='₹'+(st.earnings||0)});
+}
+function renderAnnouncements(data){
+var c=document.getElementById('announcementsList');
+if(!data){c.innerHTML='';return}
+var html='';var arr=Object.entries(data).sort(function(a,b){return(b[1].timestamp||0)-(a[1].timestamp||0)}).slice(0,2);
+arr.forEach(function(e){html+='<div class="announcement-card"><div class="ann-title"><i class="fas fa-bullhorn" style="color:var(--warning);margin-right:6px"></i>'+e[1].title+'</div><div class="ann-msg">'+e[1].message+'</div><div class="ann-time">'+fmtDate(e[1].timestamp)+'</div></div>'});
+c.innerHTML=html;
+}
+function renderHomeTournaments(){
+var c=document.getElementById('homeTournaments');
+var entries=Object.entries(allTournaments).filter(function(e){return e[1].status==='upcoming'});
+if(!entries.length){c.innerHTML=emptyState('fa-gamepad','No upcoming matches','Check back soon!');return}
+var html='';entries.sort(function(a,b){return(a[1].matchTime||0)-(b[1].matchTime||0)}).slice(0,5).forEach(function(e){html+=renderTCard(e[0],e[1])});
+c.innerHTML=html;
+}
+
+/* TOURNAMENTS */
+function loadTournaments(){renderTournaments()}
+function filterTournaments(f){
+currentFilter=f;document.querySelectorAll('#tournamentFilters .filter-tab').forEach(function(t){t.classList.remove('active')});event.target.classList.add('active');renderTournaments();
+}
+function renderTournaments(){
+var c=document.getElementById('tournamentsList');
+var entries=Object.entries(allTournaments);
+if(currentFilter==='custom')entries=entries.filter(function(e){return e[1].isCustom===true});
+else if(currentFilter!=='all')entries=entries.filter(function(e){return e[1].status===currentFilter});
+if(!entries.length){c.innerHTML=emptyState('fa-gamepad','No matches found','');return}
+entries.sort(function(a,b){return(b[1].createdAt||0)-(a[1].createdAt||0)});
+var html='';entries.forEach(function(e){html+=renderTCard(e[0],e[1])});c.innerHTML=html;
+}
+
+function renderTCard(id,tr){
+var filled=tr.filledSlots||0,max=tr.maxSlots||100,pct=Math.min((filled/max)*100,100);
+var isFull=filled>=max;var uid=currentUser?currentUser.uid:'';var isJoined=tr.participants&&tr.participants[uid];
+var statusClass=tr.status==='live'?'live':tr.status==='completed'?'completed':'';
+var statusText=tr.status==='live'?'🔴 LIVE':tr.status==='completed'?'✅ DONE':'⏰ UPCOMING';
+var isCustom=tr.isCustom===true;var isPremT=tr.visibility==='premium';
+var extraClass=isCustom?'premium-card':isPremT?'premium-card':'';
+var headerClass=isCustom?'custom':statusClass;
+return '<div class="tournament-card '+extraClass+'" onclick="navigateTo(\'tournamentDetail\',\''+id+'\')">'+
+'<div class="tc-header '+headerClass+'"><span class="tc-game">'+(tr.game||'Battle Royale')+(isCustom?' (Custom)':'')+'</span><span class="tc-status">'+statusText+'</span></div>'+
+'<div class="tc-body"><div class="tc-title">'+(tr.name||'Tournament')+'</div>'+
+'<div class="tc-info"><div class="tc-info-item"><div class="label">Prize Pool</div><div class="value prize">₹'+(tr.prizePool||0)+'</div></div>'+
+'<div class="tc-info-item"><div class="label">Entry Fee</div><div class="value fee">'+(tr.entryFee>0?'₹'+tr.entryFee:'FREE')+'</div></div>'+
+'<div class="tc-info-item"><div class="label">Per Kill</div><div class="value">₹'+(tr.perKillPrize||0)+'</div></div></div>'+
+'<div class="tc-slots"><div class="tc-slots-bar"><div class="tc-slots-fill" style="width:'+pct+'%"></div></div>'+
+'<div class="tc-slots-text"><span>'+filled+'/'+max+' Slots</span><span>'+(tr.map||'')+'</span></div></div>'+
+'<div class="tc-footer"><div class="tc-time"><i class="fas fa-clock"></i>'+fmtDate(tr.matchTime)+'</div>'+
+'<button class="tc-join-btn '+(isJoined?'joined':isFull?'full':'')+'" onclick="event.stopPropagation();'+(isJoined?'':isFull?'':'joinTournament(\''+id+'\')')+'" '+(isFull&&!isJoined?'disabled':'')+'>'+
+(isJoined?'✓ Joined':isFull?'Full':'Join')+'</button></div></div></div>';
+}
+
+/* JOIN */
+function joinTournament(id){
+var tr=allTournaments[id];if(!tr)return;var fee=tr.entryFee||0;
+if(tr.visibility==='premium'&&!isPremium()){showToast('Premium members only!','warning');return}
+showModal('<div class="modal-title">Join Tournament?</div><p style="text-align:center;color:var(--text2);margin-bottom:6px">'+(tr.name||'')+'</p><p style="text-align:center;font-size:.9rem;margin-bottom:20px">Entry fee ₹'+fee+' will be deducted.</p><div style="display:flex;gap:10px"><button class="btn btn-secondary" onclick="closeModal()" style="flex:1">Cancel</button><button class="btn btn-primary" onclick="confirmJoin(\''+id+'\','+fee+')" style="flex:1" id="confirmJoinBtn">Confirm</button></div>');
+}
+async function confirmJoin(id,fee){
+showLoader('confirmJoinBtn');
+try{var uid=currentUser.uid;if(fee>0&&userWallet<fee){showToast('Insufficient balance!','error');hideLoader('confirmJoinBtn');return}
+var pSnap=await db.ref('tournaments/'+id+'/participants/'+uid).once('value');if(pSnap.exists()){showToast('Already joined!','warning');closeModal();return}
+var tSnap=await db.ref('tournaments/'+id).once('value');var tData=tSnap.val();if((tData.filledSlots||0)>=(tData.maxSlots||100)){showToast('Slots full!','error');closeModal();return}
+if(fee>0){await db.ref('users/'+uid+'/wallet/balance').set(userWallet-fee);await db.ref('users/'+uid+'/transactions').push({type:'entry_fee',amount:fee,status:'approved',description:'Entry: '+(tData.name||''),timestamp:Date.now()})}
+await db.ref('tournaments/'+id+'/participants/'+uid).set({name:userProfile.name||'Player',gameName:userProfile.gameName||'',gameUID:userProfile.gameUID||'',joinedAt:Date.now(),kills:0,rank:0,prize:0});
+await db.ref('tournaments/'+id+'/filledSlots').set((tData.filledSlots||0)+1);
+var msRef=db.ref('users/'+uid+'/stats/matches');var ms=await msRef.once('value');await msRef.set((ms.val()||0)+1);
+closeModal();showToast('Joined successfully!','success');
+}catch(err){showToast(err.message,'error')}hideLoader('confirmJoinBtn');
+}
+
+/* TOURNAMENT DETAIL */
+var currentTID='';
+function loadTournamentDetail(id){
+if(!id&&currentTID)id=currentTID;if(!id)return;currentTID=id;
+var c=document.getElementById('tournamentDetailContent');
+db.ref('tournaments/'+id).on('value',function(snap){
+var tr=snap.val();if(!tr){c.innerHTML=emptyState('fa-gamepad','Not found','');return}
+var uid=currentUser.uid,isJoined=tr.participants&&tr.participants[uid];
+var filled=tr.filledSlots||0,max=tr.maxSlots||100,isFull=filled>=max;
+var mt=tr.matchTime||0,ut=tr.roomUnlockTime||(mt-600000);
+var roomOK=isJoined&&Date.now()>=ut&&tr.roomId;
+var html='<div style="background:var(--gradient);border-radius:var(--radius);padding:24px;margin-bottom:16px;text-align:center"><h2 style="font-size:1.4rem;font-weight:800;color:#fff">'+(tr.name||'')+'</h2><div style="color:rgba(255,255,255,.8);font-size:.85rem;margin-top:4px">'+(tr.game||'')+' • '+(tr.type||'')+' • '+(tr.map||'')+'</div><div style="font-size:.75rem;color:rgba(255,255,255,.7);text-transform:uppercase;margin-top:12px">Prize Pool</div><div style="font-size:2rem;font-weight:900;color:#fff">₹'+(tr.prizePool||0)+'</div></div>';
+html+='<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px"><div class="stat-card"><div class="stat-label">Entry Fee</div><div class="stat-val" style="color:var(--warning)">'+(tr.entryFee>0?'₹'+tr.entryFee:'FREE')+'</div></div><div class="stat-card"><div class="stat-label">Per Kill</div><div class="stat-val">₹'+(tr.perKillPrize||0)+'</div></div><div class="stat-card"><div class="stat-label">Slots</div><div class="stat-val">'+filled+'/'+max+'</div></div><div class="stat-card"><div class="stat-label">Time</div><div class="stat-val" style="font-size:.8rem">'+fmtDate(mt)+'</div></div></div>';
+if(isJoined){html+='<div style="background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:16px;border:2px dashed '+(roomOK?'var(--primary)':'var(--text3)')+';text-align:center"><h4 style="margin-bottom:10px;font-size:.95rem"><i class="fas fa-key"></i> Room Details</h4>'+(roomOK?'<div style="font-size:1.1rem;font-weight:700;color:var(--primary)">Room ID: '+(tr.roomId||'--')+'</div><div style="font-size:1.1rem;font-weight:700;color:var(--primary);margin-top:6px">Password: '+(tr.roomPassword||'--')+'</div>':'<p style="color:var(--text3);font-size:.85rem"><i class="fas fa-lock"></i> Room unlocks before match</p>')+'</div>'}
+if(tr.status!=='completed'){html+='<button class="btn '+(isJoined?'btn-success':'btn-primary')+'" style="margin-bottom:16px" onclick="'+(isJoined?'':'joinTournament(\''+id+'\')')+'" '+(isJoined||isFull?'disabled':'')+'>'+
+(isJoined?'✓ Joined':isFull?'Slots Full':'Join — ₹'+(tr.entryFee||0))+'</button>'}
+html+='<div class="section-title"><span>Participants ('+filled+')</span></div><div style="background:var(--card);border-radius:var(--radius);padding:16px;border:1px solid var(--border)">';
+if(tr.participants){var idx=0;Object.entries(tr.participants).forEach(function(e){idx++;html+='<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="width:28px;height:28px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700">'+idx+'</div><div style="flex:1"><div style="font-size:.88rem;font-weight:500">'+(e[1].name||'Player')+(e[1].gameName?' ('+e[1].gameName+')':'')+'</div><div style="font-size:.72rem;color:var(--text3)">'+(e[1].gameUID||'')+'</div></div>'+(e[1].rank?'<span style="font-weight:700;color:var(--warning)">#'+e[1].rank+'</span>':'')+'</div>'})}
+else html+=emptyState('fa-users','No participants','');html+='</div>';
+c.innerHTML=html;
+});
+}
+
+/* WALLET & TRANSACTIONS */
+function loadWallet(){
+var c=document.getElementById('walletTransactions');
+db.ref('users/'+currentUser.uid+'/transactions').orderByChild('timestamp').limitToLast(10).once('value',function(s){
+if(!s.exists()){c.innerHTML=emptyState('fa-receipt','No transactions','');return}
+var html='',arr=[];s.forEach(function(x){arr.push(x.val())});arr.reverse();
+arr.forEach(function(tx){html+=renderTx(tx)});c.innerHTML=html;
+});
+}
+function renderTx(tx){
+var isC=['deposit','winning','referral','promo','admin_add','premium_refund'].indexOf(tx.type)!==-1;
+var ic=tx.status==='pending'?'pending':isC?'credit':'debit';
+var icons={deposit:'fa-arrow-down',withdraw:'fa-arrow-up',entry_fee:'fa-gamepad',winning:'fa-trophy',referral:'fa-gift',promo:'fa-ticket-alt',admin_add:'fa-plus',admin_deduct:'fa-minus',premium:'fa-crown'};
+return'<div class="transaction-item"><div class="tx-icon '+ic+'"><i class="fas '+(icons[tx.type]||'fa-exchange-alt')+'"></i></div><div class="tx-details"><div class="tx-desc">'+(tx.description||tx.type)+'</div><div class="tx-date">'+fmtDate(tx.timestamp)+'</div></div><div style="text-align:right"><div class="tx-amount '+(isC?'credit':'debit')+'">'+(isC?'+':'-')+'₹'+(tx.amount||0)+'</div><span class="tx-status '+(tx.status||'approved')+'">'+(tx.status||'approved')+'</span></div></div>';
+}
+
+/* DEPOSIT */
+function setDepAmt(a){document.getElementById('depositAmount').value=a;document.querySelectorAll('.amount-chip').forEach(function(c){c.classList.remove('active')});event.target.classList.add('active')}
+async function generateQR(){
+var amt=parseInt(document.getElementById('depositAmount').value);
+var minSnap=await db.ref('settings/minDeposit').once('value');var minD=minSnap.val()||10;
+if(!amt||amt<minD){showToast('Min deposit ₹'+minD,'warning');return}
+var upiSnap=await db.ref('settings/upiId').once('value');var upiNSnap=await db.ref('settings/upiName').once('value');
+var upiId=upiSnap.val()||'example@upi';var upiName=upiNSnap.val()||'ZX BATTLE';
+var link='upi://pay?pa='+upiId+'&pn='+encodeURIComponent(upiName)+'&am='+amt+'&cu=INR';
+var qrUrl='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data='+encodeURIComponent(link);
+document.getElementById('qrImage').src=qrUrl;
+document.getElementById('displayUPI').textContent=upiId;
+document.getElementById('displayAmount').textContent=amt;
+document.getElementById('qrSection').style.display='block';
+document.getElementById('utrSection').style.display='block';
+document.getElementById('qrSection').scrollIntoView({behavior:'smooth'});
+}
+function copyUPI(){copyText(document.getElementById('displayUPI').textContent)}
+function previewSS(input){var file=input.files[0];if(!file)return;var r=new FileReader();r.onload=function(e){document.getElementById('ssPreview').innerHTML='<img src="'+e.target.result+'"><div class="remove-btn" onclick="removeSS()"><i class="fas fa-times"></i></div>';document.getElementById('ssPreview').style.display='inline-block';document.getElementById('screenshotUpload').style.display='none'};r.readAsDataURL(file)}
+function removeSS(){document.getElementById('ssPreview').style.display='none';document.getElementById('ssPreview').innerHTML='';document.getElementById('screenshotUpload').style.display='block';document.getElementById('screenshotFile').value='';depScreenshotURL=''}
+
+async function submitDeposit(){
+var amt=parseInt(document.getElementById('depositAmount').value);var utr=document.getElementById('utrInput').value.trim();var file=document.getElementById('screenshotFile').files[0];
+if(!amt){showToast('Enter amount','warning');return}if(!utr){showToast('Enter UTR','warning');return}if(!file&&!depScreenshotURL){showToast('Upload screenshot','warning');return}
+showLoader('submitDepBtn');
+try{
+if(file&&!depScreenshotURL){document.getElementById('uploadProgress').style.display='block';depScreenshotURL=await uploadToImgBB(file,function(p){document.getElementById('uploadFill').style.width=p+'%'});document.getElementById('uploadProgress').style.display='none'}
+var dRef=db.ref('deposits').push();
+await dRef.set({userId:currentUser.uid,userName:userProfile.name||'User',amount:amt,utrId:utr,screenshot:depScreenshotURL,status:'pending',timestamp:Date.now()});
+await db.ref('users/'+currentUser.uid+'/transactions').push({type:'deposit',amount:amt,status:'pending',description:'Deposit ₹'+amt+' (UTR: '+utr+')',depositId:dRef.key,timestamp:Date.now()});
+document.getElementById('depositAmount').value='';document.getElementById('utrInput').value='';removeSS();depScreenshotURL='';
+document.getElementById('qrSection').style.display='none';document.getElementById('utrSection').style.display='none';
+showToast('Deposit submitted!','success');loadDepositHistory();
+}catch(err){showToast(err.message,'error')}hideLoader('submitDepBtn');
+}
+function loadDepositHistory(){var c=document.getElementById('depositHistory');db.ref('deposits').orderByChild('userId').equalTo(currentUser.uid).once('value',function(s){if(!s.exists()){c.innerHTML=emptyState('fa-history','No deposits','');return}var html='',arr=[];s.forEach(function(x){arr.push(x.val())});arr.sort(function(a,b){return(b[1].timestamp||0)-(a[1].timestamp||0)});arr.forEach(function(d){html+='<div class="transaction-item"><div class="tx-icon '+(d.status==='approved'?'credit':d.status==='rejected'?'debit':'pending')+'"><i class="fas fa-arrow-down"></i></div><div class="tx-details"><div class="tx-desc">Deposit ₹'+d.amount+'</div><div class="tx-date">UTR: '+d.utrId+' • '+fmtDate(d.timestamp)+'</div></div><div style="text-align:right"><div class="tx-amount credit">+₹'+d.amount+'</div><span class="tx-status '+d.status+'">'+d.status+'</span></div></div>'});c.innerHTML=html})}
+
+/* WITHDRAW */
+async function submitWithdraw(){
+var amt=parseInt(document.getElementById('withdrawAmount').value);var upi=document.getElementById('withdrawUPI').value.trim();
+if(!amt){showToast('Enter amount','warning');return}if(!upi){showToast('Enter UPI','warning');return}if(amt>userWallet){showToast('Insufficient balance!','error');return}
+showLoader('submitWithBtn');
+try{await db.ref('users/'+currentUser.uid+'/wallet/balance').set(userWallet-amt);
+await db.ref('withdrawals').push({userId:currentUser.uid,userName:userProfile.name||'User',amount:amt,upiId:upi,status:'pending',timestamp:Date.now()});
+await db.ref('users/'+currentUser.uid+'/transactions').push({type:'withdraw',amount:amt,status:'pending',description:'Withdraw ₹'+amt+' to '+upi,timestamp:Date.now()});
+document.getElementById('withdrawAmount').value='';document.getElementById('withdrawUPI').value='';showToast('Withdraw submitted!','success');loadWithdrawHistory();
+}catch(err){showToast(err.message,'error')}hideLoader('submitWithBtn');
+}
+function loadWithdrawHistory(){var c=document.getElementById('withdrawHistory');db.ref('withdrawals').orderByChild('userId').equalTo(currentUser.uid).once('value',function(s){if(!s.exists()){c.innerHTML=emptyState('fa-history','No withdrawals','');return}var html='',arr=[];s.forEach(function(x){arr.push(x.val())});arr.sort(function(a,b){return(b.timestamp||0)-(a[1].timestamp||0)});arr.forEach(function(w){html+='<div class="transaction-item"><div class="tx-icon '+(w.status==='approved'?'credit':'pending')+'"><i class="fas fa-arrow-up"></i></div><div class="tx-details"><div class="tx-desc">Withdraw ₹'+w.amount+'</div><div class="tx-date">UPI: '+w.upiId+' • '+fmtDate(w.timestamp)+'</div></div><div style="text-align:right"><div class="tx-amount debit">-₹'+w.amount+'</div><span class="tx-status '+w.status+'">'+w.status+'</span></div></div>'});c.innerHTML=html})}
+
+/* PROFILE */
+function loadProfile(){if(currentUser)db.ref('users/'+currentUser.uid+'/stats').once('value',function(s){var st=s.val()||{};document.getElementById('statMatches').textContent=st.matches||0;document.getElementById('statWins').textContent=st.wins||0;document.getElementById('statEarnings').textContent='₹'+(st.earnings||0)})}
+
+function loadEditProfile(){
+if(!userProfile)return;
+document.getElementById('editName').value=userProfile.name||'';
+document.getElementById('editPhone').value=userProfile.phone||'';
+document.getElementById('editGameName').value=userProfile.gameName||'';
+document.getElementById('editGameUID').value=userProfile.gameUID||'';
+document.getElementById('editGameType').value=userProfile.gameType||'';
+}
+
+async function saveProfile(){
+var name=document.getElementById('editName').value.trim();if(!name){showToast('Enter name','warning');return}
+showLoader('saveProfileBtn');
+try{await db.ref('users/'+currentUser.uid+'/profile').update({name:name,phone:document.getElementById('editPhone').value.trim(),gameName:document.getElementById('editGameName').value.trim(),gameUID:document.getElementById('editGameUID').value.trim(),gameType:document.getElementById('editGameType').value});
+showToast('Profile updated!','success');navigateTo('profile');
+}catch(err){showToast(err.message,'error')}hideLoader('saveProfileBtn');
+}
+
+async function uploadProfileImage(input){var file=input.files[0];if(!file)return;showToast('Uploading...','info');try{var url=await uploadToImgBB(file);await db.ref('users/'+currentUser.uid+'/profile/profileImage').set(url);showToast('Updated!','success')}catch(err){showToast('Failed','error')}}
+
+/* ===== PREMIUM SYSTEM ===== */
+function loadPremium(){
+var c=document.getElementById('premiumContent');
+if(isPremium()){
+var expDate=new Date(userProfile.premiumExpiry).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+c.innerHTML='<div class="premium-status-card"><div class="crown">👑</div><h3>Premium Active!</h3><p style="color:var(--text2);margin-top:4px">Plan: '+(userProfile.premiumPlan||'Monthly')+'</p><div class="expires">Expires: '+expDate+'</div></div>'+
+'<div class="deposit-section"><h3><i class="fas fa-star" style="color:#f39c12"></i> Your Premium Benefits</h3>'+
+'<div class="premium-feature"><i class="fas fa-check-circle"></i><div class="pf-text"><h4>Create Custom Matches</h4><p>Host matches with friends</p></div></div>'+
+'<div class="premium-feature"><i class="fas fa-check-circle"></i><div class="pf-text"><h4>Premium Tournaments</h4><p>Access exclusive tournaments</p></div></div>'+
+'<div class="premium-feature"><i class="fas fa-check-circle"></i><div class="pf-text"><h4>Submit Screenshots</h4><p>Upload results & get prizes</p></div></div>'+
+'<div class="premium-feature"><i class="fas fa-check-circle"></i><div class="pf-text"><h4>Priority Support</h4><p>Fast response times</p></div></div></div>';
+return;
+}
+c.innerHTML='<div class="premium-card-big"><div class="premium-card-header"><span class="crown">👑</span><h2>Get Premium</h2><p>Unlock exclusive features</p></div><div class="premium-card-body">'+
+'<div class="premium-feature"><i class="fas fa-gamepad"></i><div class="pf-text"><h4>Create Custom Matches</h4><p>Host your own matches, invite friends, set custom rules</p></div></div>'+
+'<div class="premium-feature"><i class="fas fa-camera"></i><div class="pf-text"><h4>Screenshot Based Results</h4><p>Upload match screenshots, prizes distributed by admin</p></div></div>'+
+'<div class="premium-feature"><i class="fas fa-trophy"></i><div class="pf-text"><h4>Exclusive Tournaments</h4><p>Access premium-only tournaments with bigger prizes</p></div></div>'+
+'<div class="premium-feature"><i class="fas fa-bolt"></i><div class="pf-text"><h4>Priority Queue</h4><p>Get confirmed first in popular tournaments</p></div></div>'+
+'<div class="premium-feature"><i class="fas fa-headset"></i><div class="pf-text"><h4>Priority Support</h4><p>Get help faster from our team</p></div></div>'+
+'<div class="premium-plans">'+
+'<div class="premium-plan" onclick="selectPlan(this,\'weekly\',49)"><div class="plan-name">Weekly</div><div class="plan-price">₹49 <span>/ 7 days</span></div><div class="plan-features">All premium features for 1 week</div></div>'+
+'<div class="premium-plan popular selected" onclick="selectPlan(this,\'monthly\',149)"><div class="plan-name">Monthly</div><div class="plan-price">₹149 <span>/ 30 days</span></div><div class="plan-features">Best value! Save 25%</div></div>'+
+'<div class="premium-plan" onclick="selectPlan(this,\'yearly\',999)"><div class="plan-name">Yearly</div><div class="plan-price">₹999 <span>/ 365 days</span></div><div class="plan-features">Save 45%! Best deal</div></div>'+
+'</div><button class="btn btn-premium" style="margin-top:16px" onclick="buyPremium()" id="buyPremBtn"><i class="fas fa-crown"></i> Buy Premium — ₹149</button></div></div>';
+}
+
+var selectedPlan={name:'monthly',price:149,days:30};
+function selectPlan(el,name,price){
+document.querySelectorAll('.premium-plan').forEach(function(p){p.classList.remove('selected')});el.classList.add('selected');
+var days=name==='weekly'?7:name==='yearly'?365:30;
+selectedPlan={name:name,price:price,days:days};
+var btn=document.getElementById('buyPremBtn');if(btn)btn.innerHTML='<i class="fas fa-crown"></i> Buy Premium — ₹'+price;
+}
+
+async function buyPremium(){
+if(userWallet<selectedPlan.price){showToast('Insufficient balance! Deposit ₹'+selectedPlan.price+' first.','error');return}
+showModal('<div class="modal-title">Buy Premium?</div><p style="text-align:center;margin-bottom:6px">'+selectedPlan.name.charAt(0).toUpperCase()+selectedPlan.name.slice(1)+' Plan</p><p style="text-align:center;font-size:1.2rem;font-weight:800;color:#f39c12;margin-bottom:16px">₹'+selectedPlan.price+'</p><p style="text-align:center;font-size:.82rem;color:var(--text2);margin-bottom:20px">₹'+selectedPlan.price+' will be deducted from your wallet.</p><div style="display:flex;gap:10px"><button class="btn btn-secondary" onclick="closeModal()" style="flex:1">Cancel</button><button class="btn btn-premium" onclick="confirmPremium()" style="flex:1" id="confirmPremBtn">Confirm</button></div>');
+}
+
+async function confirmPremium(){
+showLoader('confirmPremBtn');
+try{var uid=currentUser.uid;
+await db.ref('users/'+uid+'/wallet/balance').set(userWallet-selectedPlan.price);
+var expiry=Date.now()+(selectedPlan.days*86400000);
+await db.ref('users/'+uid+'/profile').update({premium:true,premiumExpiry:expiry,premiumPlan:selectedPlan.name,premiumPurchasedAt:Date.now()});
+await db.ref('users/'+uid+'/transactions').push({type:'premium',amount:selectedPlan.price,status:'approved',description:'Premium '+selectedPlan.name+' plan purchased',timestamp:Date.now()});
+await db.ref('notifications/'+uid).push({title:'👑 Premium Activated!',message:'Your '+selectedPlan.name+' premium is now active!',type:'system',read:false,timestamp:Date.now()});
+closeModal();showToast('Premium activated! 👑','success');navigateTo('premium');
+}catch(e){showToast(e.message,'error')}hideLoader('confirmPremBtn');
+}
+
+/* ===== CREATE CUSTOM MATCH (Premium) ===== */
+function loadCreateMatch(){
+var c=document.getElementById('createMatchContent');
+if(!isPremium()){c.innerHTML='<div class="no-perm-box" style="background:var(--card);border:2px dashed #f39c12;border-radius:var(--radius);padding:40px;text-align:center"><i class="fas fa-crown" style="font-size:2.5rem;color:#f39c12;margin-bottom:12px;display:block"></i><h3 style="color:#f39c12">Premium Required</h3><p style="color:var(--text2);margin:10px 0 16px">Create custom matches with Premium membership</p><button class="btn btn-premium btn-sm" onclick="navigateTo(\'premium\')"><i class="fas fa-crown"></i> Get Premium</button></div>';return}
+c.innerHTML='<div class="create-match-section"><h3><i class="fas fa-crown"></i> Create Custom Match</h3>'+
+'<div class="form-group"><label>Match Name</label><input type="text" class="form-input" id="cmName" placeholder="e.g. Friends Squad Battle"></div>'+
+'<div class="form-row"><div class="form-group"><label>Game</label><select class="form-input" id="cmGame"><option>Free Fire</option><option>BGMI</option><option>PUBG</option><option>COD Mobile</option></select></div>'+
+'<div class="form-group"><label>Type</label><select class="form-input" id="cmType"><option>Solo</option><option>Duo</option><option>Squad</option></select></div></div>'+
+'<div class="form-row"><div class="form-group"><label>Map</label><input type="text" class="form-input" id="cmMap" placeholder="Bermuda"></div>'+
+'<div class="form-group"><label>Max Players</label><input type="number" class="form-input" id="cmSlots" value="12" min="2" max="100"></div></div>'+
+'<div class="form-row"><div class="form-group"><label>Entry Fee (₹)</label><input type="number" class="form-input" id="cmFee" value="0" min="0"></div>'+
+'<div class="form-group"><label>Prize Pool (₹)</label><input type="number" class="form-input" id="cmPrize" value="0" min="0"></div></div>'+
+'<div class="form-group"><label>Per Kill Prize (₹)</label><input type="number" class="form-input" id="cmKill" value="0" min="0"></div>'+
+'<div class="form-group"><label>Match Date & Time</label><input type="datetime-local" class="form-input" id="cmTime"></div>'+
+'<p style="font-size:.78rem;color:var(--warning);margin-bottom:14px"><i class="fas fa-info-circle"></i> After match, you must submit result screenshot. Admin will verify & distribute prizes.</p>'+
+'<button class="btn btn-premium" onclick="createCustomMatch()" id="createCMBtn"><i class="fas fa-plus"></i> Create Match</button></div>';
+}
+
+async function createCustomMatch(){
+var name=document.getElementById('cmName').value.trim();var timeStr=document.getElementById('cmTime').value;
+if(!name||!timeStr){showToast('Fill name & time!','warning');return}
+showLoader('createCMBtn');
+try{
+var uid=currentUser.uid;
+var tRef=db.ref('tournaments').push();
+await tRef.set({
+name:name,game:document.getElementById('cmGame').value,type:document.getElementById('cmType').value,
+map:document.getElementById('cmMap').value.trim(),entryFee:parseInt(document.getElementById('cmFee').value)||0,
+prizePool:parseInt(document.getElementById('cmPrize').value)||0,perKillPrize:parseInt(document.getElementById('cmKill').value)||0,
+maxSlots:parseInt(document.getElementById('cmSlots').value)||12,matchTime:new Date(timeStr).getTime(),
+status:'upcoming',filledSlots:0,roomId:'',roomPassword:'',isCustom:true,
+createdBy:uid,createdByName:userProfile.name||'User',
+screenshotRequired:true,screenshotSubmitted:false,resultVerified:false,
+visibility:'public',createdAt:Date.now(),
+prizeDistribution:{1:0,2:0,3:0,'4-10':0}
+});
+showToast('Custom match created!','success');navigateTo('tournaments');
+}catch(e){showToast(e.message,'error')}hideLoader('createCMBtn');
+}
+
+/* ===== SCREENSHOT SUBMIT (Premium) ===== */
+function loadSSSubmit(){
+var c=document.getElementById('ssSubmitList');
+if(!isPremium()){c.innerHTML='<div style="background:var(--card);border:2px dashed #f39c12;border-radius:var(--radius);padding:40px;text-align:center"><i class="fas fa-crown" style="font-size:2rem;color:#f39c12;margin-bottom:10px;display:block"></i><h3>Premium Feature</h3></div>';return}
+var uid=currentUser.uid;
+var entries=Object.entries(allTournaments).filter(function(e){
+return e[1].isCustom&&e[1].createdBy===uid&&(e[1].status==='live'||e[1].status==='upcoming'||(!e[1].resultVerified&&e[1].status==='completed'));
+});
+if(!entries.length){
+var participatedEntries=Object.entries(allTournaments).filter(function(e){
+return e[1].screenshotRequired&&e[1].participants&&e[1].participants[uid]&&!e[1].participants[uid].screenshotURL;
+});
+if(!participatedEntries.length){c.innerHTML=emptyState('fa-camera','No matches need screenshots','Create a match or wait for completion');return}
+entries=participatedEntries;
+}
+
+var html='';
+entries.forEach(function(e){
+var id=e[0],t=e[1];
+var hasSubmitted=t.resultScreenshots&&t.resultScreenshots[uid];
+html+='<div class="screenshot-submit-card"><div class="ss-header"><div class="ss-title">'+(t.name||'Match')+'</div><span style="font-size:.72rem;padding:3px 10px;border-radius:10px;font-weight:600;'+(hasSubmitted?'background:rgba(0,184,148,.15);color:var(--success)':'background:rgba(253,203,110,.15);color:var(--warning)')+'">'+
+(hasSubmitted?'✓ Submitted':'⏳ Pending')+'</span></div>'+
+'<p style="font-size:.82rem;color:var(--text2);margin-bottom:10px">'+(t.game||'')+' • '+fmtDate(t.matchTime)+'</p>'+
+(hasSubmitted?'<p style="font-size:.8rem;color:var(--success)"><i class="fas fa-check-circle"></i> Screenshot submitted. Admin will verify and distribute prizes.</p>':
+'<div class="form-group"><label>Match Result Screenshot</label>'+
+'<div class="upload-area" onclick="document.getElementById(\'ssFile_'+id+'\').click()"><i class="fas fa-camera"></i><p>Upload match result screenshot</p></div>'+
+'<input type="file" id="ssFile_'+id+'" accept="image/*" style="display:none" onchange="previewSSSubmit(\''+id+'\',this)">'+
+'<div class="upload-preview" id="ssPreview_'+id+'" style="display:none"></div></div>'+
+'<div class="form-group"><label>Your Rank in Match</label><input type="number" class="form-input" id="ssRank_'+id+'" placeholder="Your rank (e.g. 1)" min="1"></div>'+
+'<div class="form-group"><label>Your Kills</label><input type="number" class="form-input" id="ssKills_'+id+'" placeholder="Number of kills" min="0"></div>'+
+'<button class="btn btn-success btn-sm" onclick="submitMatchSS(\''+id+'\')" id="ssBtn_'+id+'"><i class="fas fa-upload"></i> Submit Screenshot</button>')+'</div>';
+});
+c.innerHTML=html;
+}
+
+function previewSSSubmit(id,input){
+var file=input.files[0];if(!file)return;
+var r=new FileReader();r.onload=function(e){
+document.getElementById('ssPreview_'+id).innerHTML='<img src="'+e.target.result+'" style="max-height:200px;border-radius:8px">';
+document.getElementById('ssPreview_'+id).style.display='inline-block';
+};r.readAsDataURL(file);
+}
+
+async function submitMatchSS(id){
+var file=document.getElementById('ssFile_'+id);
+if(!file||!file.files[0]){showToast('Upload screenshot first!','warning');return}
+var rank=parseInt((document.getElementById('ssRank_'+id)||{}).value)||0;
+var kills=parseInt((document.getElementById('ssKills_'+id)||{}).value)||0;
+if(!rank){showToast('Enter your rank!','warning');return}
+showLoader('ssBtn_'+id);
+try{
+var url=await uploadToImgBB(file.files[0]);
+var uid=currentUser.uid;
+await db.ref('tournaments/'+id+'/resultScreenshots/'+uid).set({
+screenshot:url,rank:rank,kills:kills,
+submittedBy:userProfile.name||'User',
+submittedAt:Date.now(),verified:false
+});
+await db.ref('tournaments/'+id+'/participants/'+uid+'/screenshotURL').set(url);
+await db.ref('tournaments/'+id+'/participants/'+uid+'/claimedRank').set(rank);
+await db.ref('tournaments/'+id+'/participants/'+uid+'/claimedKills').set(kills);
+showToast('Screenshot submitted! Admin will verify.','success');
+loadSSSubmit();
+}catch(e){showToast(e.message,'error')}
+hideLoader('ssBtn_'+id);
+}
+
+/* MATCH HISTORY */
+function loadMatchHistory(){
+var c=document.getElementById('matchHistoryList');var uid=currentUser.uid;
+var entries=Object.entries(allTournaments).filter(function(e){return e[1].participants&&e[1].participants[uid]});
+if(!entries.length){c.innerHTML=emptyState('fa-history','No match history','');return}
+var html='';entries.forEach(function(e){var id=e[0],tr=e[1],p=tr.participants[uid];var won=p.rank&&p.rank<=3;
+html+='<div class="match-item"><div class="match-item-header"><div class="match-game">'+(tr.name||'Match')+(tr.isCustom?' 👑':'')+'</div>'+
+(tr.status==='completed'?'<span class="match-result-badge '+(won?'won':'lost')+'">'+(won?'#'+p.rank+' Won':'#'+(p.rank||'-'))+'</span>':'<span class="match-result-badge" style="background:rgba(108,92,231,.15);color:var(--primary)">'+tr.status+'</span>')+'</div>'+
+'<div class="match-stats"><div class="match-stats"><div class="match-stat"><div class="ms-val">#'+(p.rank||'-')+'</div><div class="ms-label">Rank</div></div>'+
+'<div class="match-stat"><div class="ms-val">'+(p.kills||0)+'</div><div class="ms-label">Kills</div></div>'+
+'<div class="match-stat"><div class="ms-val">₹'+(p.prize||0)+'</div><div class="ms-label">Prize</div></div>'+
+'<div class="match-stat"><div class="ms-val">'+(p.gameName||'-')+'</div><div class="ms-label">Name</div></div></div></div>';
+});c.innerHTML=html;
+}
+
+/* LEADERBOARD */
+function loadLBTournaments(){
+var sel=document.getElementById('lbTournamentSelect');sel.innerHTML='<option value="">-- Select --</option>';
+Object.entries(allTournaments).forEach(function(e){var opt=document.createElement('option');opt.value=e[0];opt.textContent=e[1].name||e[0];sel.appendChild(opt)});
+}
+function loadLeaderboard(tId){
+var c=document.getElementById('leaderboardContent');if(!tId){c.innerHTML='';return}
+db.ref('tournaments/'+tId+'/participants').once('value',function(snap){
+if(!snap.exists()){c.innerHTML=emptyState('fa-trophy','No data','');return}
+var players=[];snap.forEach(function(s){players.push({uid:s.key,name:s.val().name,gameName:s.val().gameName,kills:s.val().kills||0,rank:s.val().rank||999,prize:s.val().prize||0})});
+players.sort(function(a,b){return a.rank-b.rank});
+var html='';players.forEach(function(p,i){
+html+='<div class="lb-list-item '+(p.uid===currentUser.uid?'style="border-color:var(--primary)"':'')+'"><div class="lb-list-rank">#'+(p.rank||i+1)+'</div><div class="lb-list-name">'+(p.name||'Player')+(p.gameName?' ('+p.gameName+')':'')+(p.uid===currentUser.uid?' (You)':'')+'</div><div style="text-align:right"><div class="lb-list-score">₹'+p.prize+'</div><div style="font-size:.7rem;color:var(--text3)">'+p.kills+' kills</div></div></div>';});
+c.innerHTML=html;
+});
+}
+
+/* NOTIFICATIONS */
+function loadNotifications(){
+var c=document.getElementById('notificationsList');
+db.ref('notifications/'+currentUser.uid).orderByChild('timestamp').once('value',function(s){
+if(!s.exists()){c.innerHTML=emptyState('fa-bell','No notifications','');return}
+var html='',arr=[];s.forEach(function(x){arr.push({id:x.key,v:x.val()})});arr.reverse();
+arr.forEach(function(n){var iconClasses={payment:'fa-wallet',match:'fa-gamepad',result:'fa-trophy',system:'fa-bell'};
+html+='<div class="notif-item '+(n.v.read?'':'unread')+'" onclick="db.ref(\'notifications/'+currentUser.uid+'/'+n.id+'/read\').set(true)"><div class="notif-icon '+(n.v.type||'system')+'"><i class="fas '+(iconClasses[n.v.type]||'fa-bell')+'"></i></div><div class="notif-content"><div class="notif-title">'+(n.v.title||'')+'</div><div class="notif-msg">'+(n.v.message||'')+'</div><div class="notif-time">'+fmtDate(n.v.timestamp)+'</div></div></div>';});
+c.innerHTML=html;
+});
+}
+
+/* REFERRAL */
+function loadReferral(){
+if(!userProfile)return;document.getElementById('myReferralCode').textContent=userProfile.referralCode||'---';
+db.ref('users/'+currentUser.uid+'/referrals').once('value',function(s){
+var count=0,earn=0,c=document.getElementById('referralHistory');
+if(!s.exists()){document.getElementById('refCount').textContent='0';document.getElementById('refEarnings').textContent='₹0';c.innerHTML=emptyState('fa-users','No referrals','');return}
+var html='';s.forEach(function(x){var r=x.val();count++;earn+=(r.bonus||0);
+html+='<div style="background:var(--card);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border)"><div><div style="font-weight:600;font-size:.9rem">'+(r.name||'User')+'</div><div style="font-size:.72rem;color:var(--text3)">'+fmtDate(r.timestamp)+'</div></div><div style="color:var(--success);font-weight:700">+₹'+(r.bonus||0)+'</div></div>';});
+document.getElementById('refCount').textContent=count;document.getElementById('refEarnings').textContent='₹'+earn;c.innerHTML=html;
+});
+}
+function copyRefCode(){copyText(document.getElementById('myReferralCode').textContent)}
+function shareReferral(){var code=userProfile.referralCode||'';var msg='Join ZX BATTLE! Use code: '+code;try{if(navigator.share)navigator.share({title:'ZX BATTLE',text:msg});else copyText(msg)}catch(e){copyText(msg)}}
+
+/* PROMO */
+async function applyPromo(){
+var code=(document.getElementById('promoInput').value||'').trim().toUpperCase();if(!code){showToast('Enter code','warning');return}
+showLoader('applyPromoBtn');
+try{var snap=await db.ref('promoCodes/'+code).once('value');
+if(!snap.exists()){showToast('Invalid code!','error');hideLoader('applyPromoBtn');return}
+var promo=snap.val();
+if(!promo.active||promo.expiresAt&&Date.now()>promo.expiresAt||(promo.maxUses&&(promo.currentUses||0)>=promo.maxUses)){showToast('Code expired/invalid!','error');hideLoader('applyPromoBtn');return}
+var usedSnap=await db.ref('users/'+currentUser.uid+'/usedPromos/'+code).once('value');
+if(usedSnap.exists()){showToast('Already used!','warning');hideLoader('applyPromoBtn');return}
+var bonus=promo.bonus||0;
+await db.ref('users/'+currentUser.uid+'/wallet/balance').set(userWallet+bonus);
+await db.ref('users/'+currentUser.uid+'/transactions').push({type:'promo',amount:bonus,status:'approved',description:'Promo: '+code+' +₹'+bonus,timestamp:Date.now()});
+await db.ref('users/'+currentUser.uid+'/usedPromos/'+code).set(true);
+await db.ref('promoCodes/'+code+'/currentUses').set((promo.currentUses||0)+1);
+document.getElementById('promoInput').value='';showToast('Promo applied! +₹'+bonus,'success');
+}catch(e){showToast(e.message,'error')}hideLoader('applyPromoBtn');
+}
+
+/* REPORT */
+function selectReason(el,r){selectedReason=r;document.querySelectorAll('.reason-chip').forEach(function(c){c.classList.remove('active')});el.classList.add('active')}
+function previewReportImg(input){var file=input.files[0];if(!file)return;var r=new FileReader();r.onload=function(e){document.getElementById('reportImgPreview').innerHTML='<img src="'+e.target.result+'" style="max-height:150px;border-radius:8px"><div class="remove-btn" onclick="removeReportImg()"><i class="fas fa-times"></i></div>';document.getElementById('reportImgPreview').style.display='inline-block'};r.readAsDataURL(file)}
+function removeReportImg(){document.getElementById('reportImgPreview').style.display='none';document.getElementById('reportImgPreview').innerHTML='';document.getElementById('reportSS').value='';reportSSURL=''}
+
+async function submitReport(){
+var pid=document.getElementById('reportPlayerId').value.trim();if(!pid||!selectedReason){showToast('Fill player & reason!','warning');return}
+showLoader('submitReportBtn');
+try{var file=document.getElementById('reportSS').files[0];if(file)reportSSURL=await uploadToImgBB(file);
+await db.ref('reports').push({reporterId:currentUser.uid,reporterName:userProfile.name||'',reportedPlayerId:pid,matchId:document.getElementById('reportMatchId').value.trim(),reason:selectedReason,description:document.getElementById('reportDesc').value.trim(),screenshot:reportSSURL,status:'pending',timestamp:Date.now()});
+document.getElementById('reportPlayerId').value='';document.getElementById('reportMatchId').value='';document.getElementById('reportDesc').value='';selectedReason='';document.querySelectorAll('.reason-chip').forEach(function(c){c.classList.remove('active')});removeReportImg();reportSSURL='';
+showToast('Report submitted!','success');
+}catch(e){showToast(e.message,'error')}hideLoader('submitReportBtn');
+}
+
+/* SETTINGS */
+function loadSettings(){var t=localStorage.getItem('bz_theme')||'dark';document.getElementById('themeToggle').classList.toggle('active',t==='dark')}
+function toggleTheme(){var c=document.documentElement.getAttribute('data-theme');var n=c==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('bz_theme',n);document.getElementById('themeToggle').classList.toggle('active',n==='dark');if(currentUser)db.ref('users/'+currentUser.uid+'/profile/theme').set(n)}
+function changeLang(l){localStorage.setItem('bz_lang',l);showToast('Language saved!','success')}
+
+/* MODAL */
+function showModal(content){document.getElementById('modalBody').innerHTML=content;document.getElementById('modalOverlay').classList.add('show')}
+function closeModal(e){if(e&&e.target!==e.currentTarget)return;document.getElementById('modalOverlay').classList.remove('show')}
+
+// प्रीमियम विज़ुअल एड्स बाईपास कंट्रोलर फंक्शन
+function checkPremiumAdStatus() {
+  try {
+    var adContainer = document.getElementById('zxBottomAdContainer');
+    if (adContainer) {
+      if (!isPremium()) {
+        adContainer.style.display = 'block';
+      } else {
+        adContainer.style.display = 'none';
+      }
+    }
+  } catch(e) { console.log("Ad Sync System Error", e); }
+}
+
+// Cashfree JavaScript SDK Checkout Trigger Function
+function startCashfreePayment(orderToken) {
+  try {
+    const cashfree = Cashfree({ mode: "sandbox" }); // लाइव सेटअप करने पर "production" करें
+    let checkoutOptions = {
+      orderToken: orderToken,
+      onPaymentEvents: function(event) { console.log("Cashfree Event Tracked: ", event); }
+    };
+    cashfree.checkout(checkoutOptions).then(function(result){
+      if(result.error) showToast(result.error.message, "error");
+    });
+  } catch(e) { console.log("Cashfree Engine Error: ", e); }
+}
+
+window.addEventListener('load',function(){var t=localStorage.getItem('bz_theme')||'dark';document.documentElement.setAttribute('data-theme',t)});
+</script>
+
+<div id="zxBottomAdContainer" style="position: relative; z-index: 99999; display: none;">
+  <input autocomplete="off" type="checkbox" id="aadsstickympige458" hidden />
+  <div>
+    <div style="width:100%; height:auto; position:fixed; text-align:center; font-size:0; bottom:65px; left:0; right:0; margin:auto">
+      <label for="aadsstickympige458" style="top: 50%; transform: translateY(-50%); right:24px; position: absolute; border-radius: 4px; background: rgba(248, 248, 249, 0.70); padding: 4px; z-index: 99999; cursor:pointer">
+        <svg fill="#000000" height="12px" width="12px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 490 490">
+          <polygon points="456.851,0 245,212.564 33.149,0 0.708,32.337 212.669,245.004 0.708,457.678 33.149,490 245,277.443 456.851,490 489.292,457.678 277.331,245.004 489.292,32.337 "/>
+        </svg>
+      </label>
+      <div id="frame" style="width: 100%; margin: auto; position: relative; z-index: 99998;">
+        <iframe data-aa="2438589" src="https://acceptable.a-ads.com/2438589/?size=Adaptive" style="border:0; padding:0; width:100%; height:75px; overflow:hidden; margin: auto"></iframe>
+      </div>
+    </div>
+    <style>
+      #aadsstickympige458:checked + div,
+      #aadsstickympige458:checked ~ div {
+        display: none !important;
+      }
+    </style>
+  </div>
+</div>
+
+
+<audio id="navSound" preload="auto">
+<source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mpeg">
+</audio>
+<script>
+function playNavSound(){
+ const sound=document.getElementById("navSound");
+ if(sound){sound.currentTime=0; sound.play().catch(()=>{});}
+}
+</script>
+
+</body>
+</html>
